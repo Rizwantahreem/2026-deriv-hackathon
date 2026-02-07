@@ -63,4 +63,8 @@ keys.txt
 # Streamlit secrets (NOT config.toml — that should be committed)
 .streamlit/secrets.toml
 
-kyc-agent/docs/*
+# Claude Code
+.claude/
+
+# Docs
+docs/
