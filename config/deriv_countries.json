@@ -1,0 +1,383 @@
+{
+  "countries": [
+    {
+      "country_code": "PK",
+      "country_name": "Pakistan",
+      "languages": [
+        "en",
+        "ur"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "national_id",
+          "doc_name": "CNIC (Computerized National Identity Card)",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "Missing back side",
+            "Blurry text",
+            "Glare on laminated surface",
+            "Corners cut off",
+            "Expired document",
+            "Name not clearly visible"
+          ],
+          "required_fields": [
+            "full_name",
+            "cnic_number",
+            "date_of_birth",
+            "photo"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        },
+        {
+          "doc_type": "passport",
+          "doc_name": "Pakistani Passport",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Photo page not fully visible",
+            "Glare covering text",
+            "Expired passport"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "gas",
+          "water",
+          "internet",
+          "phone"
+        ]
+      }
+    },
+    {
+      "country_code": "NG",
+      "country_name": "Nigeria",
+      "languages": [
+        "en"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "national_id",
+          "doc_name": "National ID (NIN)",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "NIN number not visible",
+            "Missing back side",
+            "Poor photo quality",
+            "Document damaged"
+          ],
+          "required_fields": [
+            "full_name",
+            "nin_number",
+            "date_of_birth",
+            "photo"
+          ],
+          "validity_check": false,
+          "max_age_years": null
+        },
+        {
+          "doc_type": "voter_id",
+          "doc_name": "Voter's Card",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "VIN number unclear",
+            "Missing back side",
+            "Photo faded"
+          ],
+          "required_fields": [
+            "full_name",
+            "vin_number",
+            "photo"
+          ],
+          "validity_check": false,
+          "max_age_years": null
+        },
+        {
+          "doc_type": "passport",
+          "doc_name": "Nigerian Passport",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Expired passport",
+            "Photo page damaged"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "water",
+          "phone"
+        ]
+      }
+    },
+    {
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "languages": [
+        "en",
+        "sw"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "national_id",
+          "doc_name": "Kenyan National ID",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "ID number not visible",
+            "Missing back side",
+            "Photo unclear",
+            "Document worn out"
+          ],
+          "required_fields": [
+            "full_name",
+            "id_number",
+            "date_of_birth",
+            "photo"
+          ],
+          "validity_check": false,
+          "max_age_years": null
+        },
+        {
+          "doc_type": "passport",
+          "doc_name": "Kenyan Passport",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Expired passport"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "water",
+          "phone"
+        ]
+      }
+    },
+    {
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "languages": [
+        "en"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "passport",
+          "doc_name": "UK Passport",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Photo page glare",
+            "Expired passport"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        },
+        {
+          "doc_type": "driving_license",
+          "doc_name": "UK Driving Licence",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "Missing back side",
+            "Licence number unclear",
+            "Photo quality poor"
+          ],
+          "required_fields": [
+            "full_name",
+            "licence_number",
+            "date_of_birth",
+            "photo"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "gas",
+          "water",
+          "council_tax"
+        ]
+      }
+    },
+    {
+      "country_code": "DE",
+      "country_name": "Germany",
+      "languages": [
+        "en",
+        "de"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "passport",
+          "doc_name": "German Passport (Reisepass)",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Photo page glare",
+            "Expired passport"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        },
+        {
+          "doc_type": "national_id",
+          "doc_name": "German ID Card (Personalausweis)",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "Missing back side",
+            "ID number unclear",
+            "Expired document"
+          ],
+          "required_fields": [
+            "full_name",
+            "id_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "gas",
+          "water",
+          "internet"
+        ]
+      }
+    },
+    {
+      "country_code": "UAE",
+      "country_name": "United Arab Emirates",
+      "languages": [
+        "en",
+        "ar"
+      ],
+      "supported_documents": [
+        {
+          "doc_type": "emirates_id",
+          "doc_name": "Emirates ID",
+          "requires_front": true,
+          "requires_back": true,
+          "common_issues": [
+            "Missing back side",
+            "ID number not visible",
+            "Glare on card",
+            "Expired document"
+          ],
+          "required_fields": [
+            "full_name",
+            "emirates_id_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 5
+        },
+        {
+          "doc_type": "passport",
+          "doc_name": "UAE Passport",
+          "requires_front": true,
+          "requires_back": false,
+          "common_issues": [
+            "Blurry MRZ zone",
+            "Photo page glare",
+            "Expired passport"
+          ],
+          "required_fields": [
+            "full_name",
+            "passport_number",
+            "date_of_birth",
+            "photo",
+            "expiry_date"
+          ],
+          "validity_check": true,
+          "max_age_years": 10
+        }
+      ],
+      "utility_bill_requirements": {
+        "max_age_months": 3,
+        "accepted_types": [
+          "electricity",
+          "water",
+          "internet",
+          "phone"
+        ]
+      }
+    }
+  ],
+  "supported_languages": {
+    "en": "English",
+    "ur": "Urdu",
+    "hi": "Hindi",
+    "ar": "Arabic",
+    "de": "German",
+    "sw": "Swahili"
+  }
+}

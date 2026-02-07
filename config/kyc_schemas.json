@@ -1,0 +1,1134 @@
+{
+  "version": "1.0.0",
+  "description": "Country-aware KYC form schemas for regulated trading platforms",
+  "last_updated": "2026-02-03",
+  "countries": {
+    "PK": {
+      "country_code": "PK",
+      "country_name": "Pakistan",
+      "flag": "🇵🇰",
+      "default_nationality": "Pakistani",
+      "supported_languages": [
+        "en",
+        "ur"
+      ],
+      "categories": {
+        "identity": {
+          "label": "Identity Information",
+          "order": 1,
+          "required_fields": [
+            {
+              "id": "full_name",
+              "label": "Full Name (as on CNIC)",
+              "type": "text",
+              "required": true,
+              "placeholder": "Muhammad Ahmed Khan",
+              "help": "Enter your name exactly as it appears on your CNIC",
+              "validation": {
+                "min_length": 3,
+                "max_length": 100,
+                "pattern": "^[a-zA-Z\\s\\.]+$",
+                "error": "Name should only contain letters, spaces, and dots"
+              }
+            },
+            {
+              "id": "date_of_birth",
+              "label": "Date of Birth",
+              "type": "date",
+              "required": true,
+              "validation": {
+                "min_age": 18,
+                "max_age": 100,
+                "error": "You must be at least 18 years old"
+              }
+            },
+            {
+              "id": "nationality",
+              "label": "Nationality",
+              "type": "text",
+              "required": true,
+              "default": "Pakistani",
+              "readonly": true
+            },
+            {
+              "id": "country_of_residence",
+              "label": "Country of Residence",
+              "type": "select",
+              "required": true,
+              "default": "Pakistan",
+              "options": [
+                "Pakistan",
+                "UAE",
+                "Saudi Arabia",
+                "Qatar",
+                "Kuwait",
+                "Bahrain",
+                "Oman",
+                "Other"
+              ]
+            }
+          ],
+          "optional_fields": [
+            {
+              "id": "gender",
+              "label": "Gender",
+              "type": "select",
+              "required": false,
+              "options": [
+                "Male",
+                "Female",
+                "Other"
+              ]
+            }
+          ]
+        },
+        "contact": {
+          "label": "Contact Information",
+          "order": 2,
+          "required_fields": [
+            {
+              "id": "email",
+              "label": "Email Address",
+              "type": "email",
+              "required": true,
+              "placeholder": "your.email@example.com",
+              "validation": {
+                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                "error": "Please enter a valid email address"
+              }
+            },
+            {
+              "id": "phone_number",
+              "label": "Mobile Number",
+              "type": "tel",
+              "required": true,
+              "placeholder": "03001234567",
+              "prefix": "+92",
+              "validation": {
+                "pattern": "^03[0-9]{9}$",
+                "length": 11,
+                "error": "Mobile must start with 03 and be 11 digits"
+              }
+            }
+          ],
+          "optional_fields": []
+        },
+        "address": {
+          "label": "Residential Address",
+          "order": 3,
+          "required_fields": [
+            {
+              "id": "address_line_1",
+              "label": "Street Address",
+              "type": "text",
+              "required": true,
+              "placeholder": "House #123, Street 45, Sector G-10",
+              "validation": {
+                "min_length": 10,
+                "max_length": 200,
+                "error": "Please provide a complete street address"
+              }
+            },
+            {
+              "id": "city",
+              "label": "City",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Karachi",
+                "Lahore",
+                "Islamabad",
+                "Rawalpindi",
+                "Faisalabad",
+                "Multan",
+                "Peshawar",
+                "Quetta",
+                "Sialkot",
+                "Gujranwala",
+                "Hyderabad",
+                "Other"
+              ]
+            },
+            {
+              "id": "province",
+              "label": "Province",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Punjab",
+                "Sindh",
+                "Khyber Pakhtunkhwa",
+                "Balochistan",
+                "Gilgit-Baltistan",
+                "Azad Kashmir",
+                "Islamabad Capital Territory"
+              ]
+            },
+            {
+              "id": "postal_code",
+              "label": "Postal Code",
+              "type": "text",
+              "required": true,
+              "placeholder": "44000",
+              "validation": {
+                "pattern": "^[0-9]{5}$",
+                "length": 5,
+                "error": "Postal code must be exactly 5 digits"
+              }
+            },
+            {
+              "id": "country",
+              "label": "Country",
+              "type": "text",
+              "required": true,
+              "default": "Pakistan",
+              "readonly": true
+            }
+          ],
+          "optional_fields": [
+            {
+              "id": "address_status",
+              "label": "Current Living Situation",
+              "type": "select",
+              "required": false,
+              "options": [
+                "Living at document address",
+                "Moved from document address",
+                "Renting a different address"
+              ],
+              "help": "Select if your current address differs from your document address"
+            }
+          ]
+        },
+        "government_id": {
+          "label": "Government-Issued Identification",
+          "order": 4,
+          "required_fields": [
+            {
+              "id": "cnic_number",
+              "label": "CNIC Number",
+              "type": "id",
+              "required": true,
+              "placeholder": "12345-1234567-1",
+              "mask": "#####-#######-#",
+              "validation": {
+                "pattern": "^[0-9]{5}-[0-9]{7}-[0-9]$",
+                "length": 15,
+                "error": "CNIC must be in format: 12345-1234567-1"
+              },
+              "ocr_field": true
+            }
+          ],
+          "optional_fields": []
+        },
+        "compliance": {
+          "label": "Compliance & Declarations",
+          "order": 5,
+          "required_fields": [
+            {
+              "id": "source_of_funds",
+              "label": "Source of Funds",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Salary/Employment",
+                "Business Income",
+                "Investments",
+                "Inheritance",
+                "Savings",
+                "Other"
+              ],
+              "help": "Select the primary source of funds you will use for trading"
+            },
+            {
+              "id": "politically_exposed_person",
+              "label": "Are you a Politically Exposed Person (PEP)?",
+              "type": "boolean",
+              "required": true,
+              "default": false,
+              "help": "A PEP is someone who holds a prominent public position or is closely related to one"
+            },
+            {
+              "id": "terms_and_conditions_accepted",
+              "label": "I accept the Terms & Conditions and Privacy Policy",
+              "type": "checkbox",
+              "required": true,
+              "must_be_true": true,
+              "error": "You must accept the terms and conditions to proceed"
+            }
+          ],
+          "optional_fields": []
+        }
+      },
+      "document_requirements": {
+        "proof_of_identity": {
+          "label": "Proof of Identity",
+          "required": true,
+          "documents": [
+            {
+              "type": "cnic",
+              "name": "CNIC (Computerized National Identity Card)",
+              "requires_front": true,
+              "requires_back": true,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "cnic_number",
+                "full_name",
+                "father_name",
+                "date_of_birth"
+              ],
+              "tips": [
+                "Place CNIC on a dark, flat surface",
+                "Ensure all text is clearly readable",
+                "All 4 corners must be visible",
+                "Avoid glare on the hologram area"
+              ]
+            }
+          ]
+        },
+        "proof_of_address": {
+          "label": "Proof of Address",
+          "required": true,
+          "documents": [
+            {
+              "type": "utility_bill",
+              "name": "Utility Bill (Electricity/Gas/Water)",
+              "requires_front": true,
+              "requires_back": false,
+              "max_age_months": 3,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png",
+                "pdf"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "name",
+                "address",
+                "bill_date"
+              ],
+              "tips": [
+                "Bill must be less than 3 months old",
+                "Your name and address must match form details",
+                "Bill date must be clearly visible"
+              ]
+            }
+          ]
+        }
+      },
+      "validation_rules": {
+        "cnic_checksum": false,
+        "age_verification": true,
+        "address_matching": true,
+        "name_matching": true
+      },
+      "compliance_checks": {
+        "aml_screening": true,
+        "pep_check": true,
+        "sanctions_check": true,
+        "fatca": false
+      },
+      "conditional_logic": [
+        {
+          "trigger": {
+            "field": "country_of_residence",
+            "value": "Other"
+          },
+          "action": "show_field",
+          "target": "other_country_residence"
+        },
+        {
+          "trigger": {
+            "field": "politically_exposed_person",
+            "value": true
+          },
+          "action": "show_field",
+          "target": "pep_details"
+        }
+      ]
+    },
+    "GB": {
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "flag": "🇬🇧",
+      "default_nationality": "British",
+      "supported_languages": [
+        "en"
+      ],
+      "categories": {
+        "identity": {
+          "label": "Identity Information",
+          "order": 1,
+          "required_fields": [
+            {
+              "id": "first_name",
+              "label": "First Name",
+              "type": "text",
+              "required": true,
+              "placeholder": "John",
+              "validation": {
+                "min_length": 1,
+                "max_length": 50,
+                "pattern": "^[a-zA-Z\\s\\-']+$",
+                "error": "First name should only contain letters, spaces, hyphens, and apostrophes"
+              }
+            },
+            {
+              "id": "last_name",
+              "label": "Last Name",
+              "type": "text",
+              "required": true,
+              "placeholder": "Smith",
+              "validation": {
+                "min_length": 1,
+                "max_length": 50,
+                "pattern": "^[a-zA-Z\\s\\-']+$",
+                "error": "Last name should only contain letters, spaces, hyphens, and apostrophes"
+              }
+            },
+            {
+              "id": "date_of_birth",
+              "label": "Date of Birth",
+              "type": "date",
+              "required": true,
+              "validation": {
+                "min_age": 18,
+                "max_age": 100,
+                "error": "You must be at least 18 years old"
+              }
+            },
+            {
+              "id": "nationality",
+              "label": "Nationality",
+              "type": "select",
+              "required": true,
+              "default": "British",
+              "options": [
+                "British",
+                "Irish",
+                "EU National",
+                "Other"
+              ]
+            },
+            {
+              "id": "country_of_residence",
+              "label": "Country of Residence",
+              "type": "select",
+              "required": true,
+              "default": "United Kingdom",
+              "options": [
+                "United Kingdom",
+                "Other"
+              ]
+            }
+          ],
+          "optional_fields": []
+        },
+        "contact": {
+          "label": "Contact Information",
+          "order": 2,
+          "required_fields": [
+            {
+              "id": "email",
+              "label": "Email Address",
+              "type": "email",
+              "required": true,
+              "placeholder": "john.smith@example.co.uk",
+              "validation": {
+                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                "error": "Please enter a valid email address"
+              }
+            },
+            {
+              "id": "phone_number",
+              "label": "Mobile Number",
+              "type": "tel",
+              "required": true,
+              "placeholder": "07700 900123",
+              "prefix": "+44",
+              "validation": {
+                "pattern": "^0?7[0-9]{9}$",
+                "error": "Please enter a valid UK mobile number"
+              }
+            }
+          ],
+          "optional_fields": []
+        },
+        "address": {
+          "label": "Residential Address",
+          "order": 3,
+          "required_fields": [
+            {
+              "id": "address_line_1",
+              "label": "Address Line 1",
+              "type": "text",
+              "required": true,
+              "placeholder": "123 High Street",
+              "validation": {
+                "min_length": 5,
+                "max_length": 100,
+                "error": "Please provide a valid address"
+              }
+            },
+            {
+              "id": "city",
+              "label": "Town/City",
+              "type": "text",
+              "required": true,
+              "placeholder": "London"
+            },
+            {
+              "id": "postcode",
+              "label": "Postcode",
+              "type": "text",
+              "required": true,
+              "placeholder": "SW1A 1AA",
+              "validation": {
+                "pattern": "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$",
+                "error": "Please enter a valid UK postcode (e.g., SW1A 1AA)"
+              }
+            },
+            {
+              "id": "country",
+              "label": "Country",
+              "type": "text",
+              "required": true,
+              "default": "United Kingdom",
+              "readonly": true
+            }
+          ],
+          "optional_fields": [
+            {
+              "id": "county",
+              "label": "County",
+              "type": "text",
+              "required": false,
+              "placeholder": "Greater London"
+            },
+            {
+              "id": "address_status",
+              "label": "Current Living Situation",
+              "type": "select",
+              "required": false,
+              "options": [
+                "Living at document address",
+                "Moved from document address",
+                "Renting a different address"
+              ],
+              "help": "Select if your current address differs from your document address"
+            }
+          ]
+        },
+        "government_id": {
+          "label": "Government-Issued Identification",
+          "order": 4,
+          "description": "Please provide ONE of the following documents",
+          "one_of": true,
+          "options": [
+            {
+              "id": "passport_option",
+              "label": "UK Passport",
+              "fields": [
+                {
+                  "id": "passport_number",
+                  "label": "Passport Number",
+                  "type": "id",
+                  "required": true,
+                  "placeholder": "123456789",
+                  "validation": {
+                    "pattern": "^[0-9]{9}$",
+                    "length": 9,
+                    "error": "UK passport number must be 9 digits"
+                  },
+                  "ocr_field": true
+                }
+              ],
+              "document": {
+                "type": "passport",
+                "name": "UK Passport",
+                "requires_front": true,
+                "requires_back": false
+              }
+            },
+            {
+              "id": "driving_license_option",
+              "label": "UK Driving Licence",
+              "fields": [
+                {
+                  "id": "driving_license_number",
+                  "label": "Driving Licence Number",
+                  "type": "id",
+                  "required": true,
+                  "placeholder": "SMITH901015JN9AA",
+                  "validation": {
+                    "pattern": "^[A-Z]{5}[0-9]{6}[A-Z0-9]{5}$",
+                    "length": 16,
+                    "error": "UK driving licence must be 16 characters"
+                  },
+                  "ocr_field": true
+                }
+              ],
+              "document": {
+                "type": "driving_license",
+                "name": "UK Driving Licence",
+                "requires_front": true,
+                "requires_back": true
+              }
+            }
+          ]
+        },
+        "compliance": {
+          "label": "Compliance & Declarations (FCA Regulated)",
+          "order": 5,
+          "required_fields": [
+            {
+              "id": "source_of_funds",
+              "label": "Source of Funds",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Employment Income",
+                "Self-Employment",
+                "Investments/Dividends",
+                "Pension",
+                "Inheritance",
+                "Property Sale",
+                "Savings",
+                "Other"
+              ],
+              "help": "Select the primary source of funds you will use for trading"
+            },
+            {
+              "id": "employment_status",
+              "label": "Employment Status",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Employed",
+                "Self-Employed",
+                "Retired",
+                "Student",
+                "Unemployed",
+                "Other"
+              ]
+            },
+            {
+              "id": "expected_trading_volume",
+              "label": "Expected Annual Trading Volume",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Less than £10,000",
+                "£10,000 - £50,000",
+                "£50,000 - £100,000",
+                "£100,000 - £500,000",
+                "More than £500,000"
+              ],
+              "help": "Approximate amount you expect to trade per year"
+            },
+            {
+              "id": "politically_exposed_person",
+              "label": "Are you a Politically Exposed Person (PEP)?",
+              "type": "boolean",
+              "required": true,
+              "default": false,
+              "help": "A PEP is an individual who holds or has held a prominent public function"
+            },
+            {
+              "id": "us_tax_resident",
+              "label": "Are you a US tax resident (FATCA)?",
+              "type": "boolean",
+              "required": true,
+              "default": false,
+              "help": "Under FATCA, we must identify US persons for tax reporting purposes"
+            },
+            {
+              "id": "terms_and_conditions_accepted",
+              "label": "I accept the Terms & Conditions, Privacy Policy, and acknowledge the Risk Disclosure",
+              "type": "checkbox",
+              "required": true,
+              "must_be_true": true,
+              "error": "You must accept the terms and conditions to proceed"
+            }
+          ],
+          "optional_fields": []
+        }
+      },
+      "document_requirements": {
+        "proof_of_identity": {
+          "label": "Proof of Identity",
+          "required": true,
+          "one_of": true,
+          "documents": [
+            {
+              "type": "passport",
+              "name": "UK Passport",
+              "requires_front": true,
+              "requires_back": false,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "passport_number",
+                "first_name",
+                "last_name",
+                "date_of_birth",
+                "expiry_date"
+              ],
+              "tips": [
+                "Upload the photo page of your passport",
+                "All text must be clearly readable",
+                "Passport must not be expired"
+              ]
+            },
+            {
+              "type": "driving_license",
+              "name": "UK Driving Licence",
+              "requires_front": true,
+              "requires_back": true,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "driving_license_number",
+                "first_name",
+                "last_name",
+                "date_of_birth"
+              ],
+              "tips": [
+                "Upload both front and back of photocard",
+                "All text must be clearly readable",
+                "Licence must be valid and not expired"
+              ]
+            }
+          ]
+        },
+        "proof_of_address": {
+          "label": "Proof of Address",
+          "required": true,
+          "documents": [
+            {
+              "type": "utility_bill",
+              "name": "Utility Bill / Bank Statement",
+              "requires_front": true,
+              "requires_back": false,
+              "max_age_months": 3,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png",
+                "pdf"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "name",
+                "address",
+                "date"
+              ],
+              "tips": [
+                "Document must be dated within the last 3 months",
+                "Your name and full address must be visible",
+                "Mobile phone bills are not accepted"
+              ]
+            }
+          ]
+        }
+      },
+      "validation_rules": {
+        "passport_format": true,
+        "driving_license_format": true,
+        "postcode_format": true,
+        "age_verification": true,
+        "address_matching": true,
+        "name_matching": true
+      },
+      "compliance_checks": {
+        "aml_screening": true,
+        "pep_check": true,
+        "sanctions_check": true,
+        "fatca": true,
+        "fca_appropriateness": true
+      },
+      "conditional_logic": [
+        {
+          "trigger": {
+            "field": "nationality",
+            "value": "Other"
+          },
+          "action": "show_field",
+          "target": "other_nationality"
+        },
+        {
+          "trigger": {
+            "field": "country_of_residence",
+            "value": "Other"
+          },
+          "action": "show_field",
+          "target": "other_country_residence"
+        },
+        {
+          "trigger": {
+            "field": "us_tax_resident",
+            "value": true
+          },
+          "action": "show_field",
+          "target": "us_tin"
+        },
+        {
+          "trigger": {
+            "field": "politically_exposed_person",
+            "value": true
+          },
+          "action": "show_fields",
+          "targets": [
+            "pep_position",
+            "pep_country"
+          ]
+        },
+        {
+          "trigger": {
+            "field": "employment_status",
+            "value": "Employed"
+          },
+          "action": "show_field",
+          "target": "employer_name"
+        },
+        {
+          "trigger": {
+            "field": "employment_status",
+            "value": "Self-Employed"
+          },
+          "action": "show_field",
+          "target": "business_type"
+        }
+      ]
+    },
+    "UAE": {
+      "country_code": "UAE",
+      "country_name": "United Arab Emirates",
+      "flag": "u🇦🇪",
+      "default_nationality": "Emirati",
+      "supported_languages": [
+        "en",
+        "ar"
+      ],
+      "categories": {
+        "identity": {
+          "label": "Identity Information",
+          "order": 1,
+          "required_fields": [
+            {
+              "id": "full_name",
+              "label": "Full Name (as on Emirates ID)",
+              "type": "text",
+              "required": true,
+              "placeholder": "Ahmed Al Nuaimi",
+              "help": "Enter your name exactly as it appears on your Emirates ID",
+              "validation": {
+                "min_length": 3,
+                "max_length": 100,
+                "pattern": "^[a-zA-Z\\s\\.]+$",
+                "error": "Name should only contain letters, spaces, and dots"
+              }
+            },
+            {
+              "id": "date_of_birth",
+              "label": "Date of Birth",
+              "type": "date",
+              "required": true,
+              "validation": {
+                "min_age": 18,
+                "max_age": 100,
+                "error": "You must be at least 18 years old"
+              }
+            },
+            {
+              "id": "nationality",
+              "label": "Nationality",
+              "type": "select",
+              "required": true,
+              "default": "Emirati",
+              "options": [
+                "Emirati",
+                "Other"
+              ]
+            },
+            {
+              "id": "country_of_residence",
+              "label": "Country of Residence",
+              "type": "select",
+              "required": true,
+              "default": "United Arab Emirates",
+              "options": [
+                "United Arab Emirates",
+                "Other"
+              ]
+            }
+          ],
+          "optional_fields": [
+            {
+              "id": "gender",
+              "label": "Gender",
+              "type": "select",
+              "required": false,
+              "options": [
+                "Male",
+                "Female",
+                "Other"
+              ]
+            }
+          ]
+        },
+        "contact": {
+          "label": "Contact Information",
+          "order": 2,
+          "required_fields": [
+            {
+              "id": "email",
+              "label": "Email Address",
+              "type": "email",
+              "required": true,
+              "placeholder": "your.email@example.com",
+              "validation": {
+                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                "error": "Please enter a valid email address"
+              }
+            },
+            {
+              "id": "phone_number",
+              "label": "Mobile Number",
+              "type": "tel",
+              "required": true,
+              "placeholder": "0501234567",
+              "prefix": "+971",
+              "validation": {
+                "pattern": "^0?5[0-9]{8}$",
+                "error": "Please enter a valid UAE mobile number"
+              }
+            }
+          ],
+          "optional_fields": []
+        },
+        "address": {
+          "label": "Residential Address",
+          "order": 3,
+          "required_fields": [
+            {
+              "id": "address_line_1",
+              "label": "Address Line 1",
+              "type": "text",
+              "required": true,
+              "placeholder": "Building 12, Street 34, Al Barsha"
+            },
+            {
+              "id": "city",
+              "label": "City",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Dubai",
+                "Abu Dhabi",
+                "Sharjah",
+                "Ajman",
+                "Ras Al Khaimah",
+                "Fujairah",
+                "Umm Al Quwain",
+                "Other"
+              ]
+            },
+            {
+              "id": "country",
+              "label": "Country",
+              "type": "text",
+              "required": true,
+              "default": "United Arab Emirates",
+              "readonly": true
+            }
+          ],
+          "optional_fields": [
+            {
+              "id": "po_box",
+              "label": "P.O. Box",
+              "type": "text",
+              "required": false,
+              "placeholder": "12345"
+            }
+          ]
+        },
+        "government_id": {
+          "label": "Government-Issued Identification",
+          "order": 4,
+          "required_fields": [
+            {
+              "id": "emirates_id_number",
+              "label": "Emirates ID Number",
+              "type": "id",
+              "required": true,
+              "placeholder": "784-1990-1234567-1",
+              "validation": {
+                "pattern": "^[0-9]{3}-[0-9]{4}-[0-9]{7}-[0-9]$",
+                "error": "Emirates ID must be in format: 784-1990-1234567-1"
+              },
+              "ocr_field": true
+            }
+          ],
+          "optional_fields": []
+        },
+        "compliance": {
+          "label": "Compliance & Declarations",
+          "order": 5,
+          "required_fields": [
+            {
+              "id": "source_of_funds",
+              "label": "Source of Funds",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Salary/Employment",
+                "Business Income",
+                "Investments",
+                "Inheritance",
+                "Savings",
+                "Other"
+              ]
+            },
+            {
+              "id": "politically_exposed_person",
+              "label": "Are you a Politically Exposed Person (PEP)?",
+              "type": "boolean",
+              "required": true,
+              "default": false
+            },
+            {
+              "id": "terms_and_conditions_accepted",
+              "label": "I accept the Terms & Conditions and Privacy Policy",
+              "type": "checkbox",
+              "required": true,
+              "must_be_true": true,
+              "error": "You must accept the terms and conditions to proceed"
+            }
+          ],
+          "optional_fields": []
+        }
+      },
+      "document_requirements": {
+        "proof_of_identity": {
+          "label": "Proof of Identity",
+          "required": true,
+          "documents": [
+            {
+              "type": "emirates_id",
+              "name": "Emirates ID",
+              "requires_front": true,
+              "requires_back": true,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "emirates_id_number",
+                "full_name",
+                "date_of_birth"
+              ],
+              "tips": [
+                "Upload both front and back sides",
+                "Ensure all text is clearly readable",
+                "Avoid glare on the card surface"
+              ]
+            }
+          ]
+        },
+        "proof_of_address": {
+          "label": "Proof of Address",
+          "required": true,
+          "documents": [
+            {
+              "type": "utility_bill",
+              "name": "Utility Bill / Bank Statement",
+              "requires_front": true,
+              "requires_back": false,
+              "max_age_months": 3,
+              "accepted_formats": [
+                "jpg",
+                "jpeg",
+                "png",
+                "pdf"
+              ],
+              "max_size_mb": 5,
+              "ocr_fields": [
+                "name",
+                "address",
+                "date"
+              ],
+              "tips": [
+                "Document must be less than 3 months old",
+                "Name and address must match your form details",
+                "Date must be clearly visible"
+              ]
+            }
+          ]
+        }
+      },
+      "validation_rules": {
+        "age_verification": true,
+        "address_matching": true,
+        "name_matching": true
+      },
+      "compliance_checks": {
+        "aml_screening": true,
+        "pep_check": true,
+        "sanctions_check": true,
+        "fatca": false
+      },
+      "conditional_logic": [
+        {
+          "trigger": {
+            "field": "country_of_residence",
+            "value": "Other"
+          },
+          "action": "show_field",
+          "target": "other_country_residence"
+        },
+        {
+          "trigger": {
+            "field": "politically_exposed_person",
+            "value": true
+          },
+          "action": "show_field",
+          "target": "pep_details"
+        }
+      ]
+    }
+  },
+  "global_settings": {
+    "supported_countries": [
+      "PK",
+      "GB",
+      "UAE"
+    ],
+    "default_country": "PK",
+    "session_timeout_minutes": 30,
+    "max_upload_size_mb": 5,
+    "accepted_image_formats": [
+      "jpg",
+      "jpeg",
+      "png"
+    ],
+    "enable_ocr_validation": true,
+    "enable_liveness_check": false
+  }
+}
