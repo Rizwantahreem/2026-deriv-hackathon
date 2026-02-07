@@ -52,6 +52,14 @@
           }
         },
         {
+          "id": "address_status",
+          "label": "Current Living Situation",
+          "type": "select",
+          "required": false,
+          "options": ["Living at document address", "Moved from document address", "Renting a different address"],
+          "help": "Select if your current address differs from your ID document address"
+        },
+        {
           "id": "address_line1",
           "label": "Address",
           "type": "text",
@@ -187,6 +195,14 @@
             "error": "PAN must be 10 characters (format: ABCDE1234F)"
           },
           "help": "Optional but recommended for faster verification"
+        },
+        {
+          "id": "address_status",
+          "label": "Current Living Situation",
+          "type": "select",
+          "required": false,
+          "options": ["Living at document address", "Moved from document address", "Renting a different address"],
+          "help": "Select if your current address differs from your ID document address"
         },
         {
           "id": "address_line1",
@@ -336,6 +352,14 @@
             "error": "NI Number format: QQ 12 34 56 A"
           },
           "help": "Optional but helps with verification"
+        },
+        {
+          "id": "address_status",
+          "label": "Current Living Situation",
+          "type": "select",
+          "required": false,
+          "options": ["Living at document address", "Moved from document address", "Renting a different address"],
+          "help": "Select if your current address differs from your ID document address"
         },
         {
           "id": "address_line1",

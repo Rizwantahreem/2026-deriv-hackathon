@@ -4,24 +4,23 @@ uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 
 # AI/ML
-google-generativeai==0.3.2
-groq==0.4.2
-pillow==10.2.0
+google-generativeai>=0.8.0
+google-genai>=1.0.0
+pillow>=10.2.0
 
 # Configuration
 python-dotenv==1.0.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
 
 # Frontend
-streamlit==1.30.0
+streamlit>=1.30.0
 
 # HTTP Client (for API calls)
-httpx==0.26.0
+httpx>=0.26.0
 
-# Testing
-pytest==7.4.4
-pytest-asyncio==0.23.3
+# Deriv WebSocket API
+websockets>=12.0
 
 # Utilities
 python-jose==3.3.0

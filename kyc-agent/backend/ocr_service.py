@@ -283,40 +283,88 @@ class GeminiOCR:
         # Get custom prompt if available
         custom_prompt = self.ocr_prompts.get(document_type, "")
         
-        # Document-specific requirements
+        # Side-aware document requirements
         doc_requirements = {
             "cnic": {
                 "name": "Pakistani CNIC (Computerized National Identity Card)",
-                "required_elements": "13-digit CNIC number, name in Urdu and English, father's name, date of birth, photo, signature, expiry date",
-                "extract_fields": "cnic_number, name_english, name_urdu, father_name, date_of_birth, gender, expiry_date"
+                "front": {
+                    "required_elements": "13-digit CNIC number, name in Urdu and English, father's name, date of birth, photo, gender",
+                    "extract_fields": "cnic_number, name_english, name_urdu, father_name, date_of_birth, gender"
+                },
+                "back": {
+                    "required_elements": "Permanent address, current address, issue date, expiry date. NOTE: The name on the back is NOT the cardholder's name",
+                    "extract_fields": "permanent_address, current_address, address, issue_date, expiry_date"
+                }
             },
             "aadhaar": {
                 "name": "Indian Aadhaar Card",
-                "required_elements": "12-digit Aadhaar number, name, date of birth, gender, photo, QR code",
-                "extract_fields": "aadhaar_number, name, date_of_birth, gender, address"
+                "front": {
+                    "required_elements": "12-digit Aadhaar number, name, date of birth, gender, photo, QR code",
+                    "extract_fields": "aadhaar_number, name, date_of_birth, gender"
+                },
+                "back": {
+                    "required_elements": "Full address, QR code, VID number",
+                    "extract_fields": "address, vid_number"
+                }
             },
             "passport": {
                 "name": "Passport",
-                "required_elements": "Passport number, surname, given names, date of birth, expiry date, photo, MRZ zone",
-                "extract_fields": "passport_number, surname, given_names, date_of_birth, expiry_date, nationality"
+                "front": {
+                    "required_elements": "Passport number, surname, given names, date of birth, expiry date, photo, MRZ zone",
+                    "extract_fields": "passport_number, surname, given_names, date_of_birth, expiry_date, nationality"
+                },
+                "photo_page": {
+                    "required_elements": "Passport number, surname, given names, date of birth, expiry date, photo, MRZ zone",
+                    "extract_fields": "passport_number, surname, given_names, date_of_birth, expiry_date, nationality"
+                }
             },
             "driving_license": {
                 "name": "Driving License",
-                "required_elements": "License number, name, date of birth, photo, expiry date, address",
-                "extract_fields": "license_number, name, date_of_birth, expiry_date, address"
+                "front": {
+                    "required_elements": "License number, name, date of birth, photo, expiry date",
+                    "extract_fields": "license_number, name, date_of_birth, expiry_date"
+                },
+                "back": {
+                    "required_elements": "Address, vehicle categories, additional information",
+                    "extract_fields": "address, categories"
+                }
             },
             "utility_bill": {
-                "name": "Utility Bill",
-                "required_elements": "Account holder name, address, bill date within last 3 months, company logo",
-                "extract_fields": "account_holder_name, address, bill_date, company_name"
+                "name": "Utility Bill / Bank Statement",
+                "front": {
+                    "required_elements": "Account holder name, full address, bill/issue/due date within last 3 months, company name/logo",
+                    "extract_fields": "account_holder_name, address, bill_date, issue_date, due_date, statement_date, company_name"
+                }
+            },
+            "emirates_id": {
+                "name": "UAE Emirates ID",
+                "front": {
+                    "required_elements": "Emirates ID number, name in English and Arabic, nationality, photo",
+                    "extract_fields": "emirates_id_number, name_english, name_arabic, nationality"
+                },
+                "back": {
+                    "required_elements": "Date of birth, gender, card number, expiry date",
+                    "extract_fields": "date_of_birth, gender, card_number, expiry_date"
+                }
             }
         }
-        
-        doc_info = doc_requirements.get(document_type, {
+
+        doc_info_raw = doc_requirements.get(document_type, {
             "name": document_type.upper(),
-            "required_elements": "standard ID document elements",
-            "extract_fields": "name, id_number, date_of_birth"
+            "front": {
+                "required_elements": "standard ID document elements",
+                "extract_fields": "name, id_number, date_of_birth"
+            }
         })
+
+        # Look up side-specific info, fallback to front
+        doc_name = doc_info_raw.get("name", document_type.upper())
+        side_info = doc_info_raw.get(side, doc_info_raw.get("front", {}))
+        doc_info = {
+            "name": doc_name,
+            "required_elements": side_info.get("required_elements", "standard ID document elements"),
+            "extract_fields": side_info.get("extract_fields", "name, id_number, date_of_birth")
+        }
         
         base_prompt = f"""
 You are a STRICT document verification expert. Your job is to analyze images and determine if they are valid identity documents.
@@ -597,11 +645,14 @@ STRICT RULES:
         self,
         extracted_fields: Dict[str, Any],
         form_data: Dict[str, Any],
-        country_code: str
+        country_code: str,
+        side: str = "front",
+        document_type: str = "",
     ) -> Tuple[bool, List[Dict[str, str]]]:
         """
         Compare OCR extracted fields with user-submitted form data.
-        
+        Side-aware: different fields are compared for front vs back.
+
         Returns:
             Tuple of (all_match, list_of_mismatches)
         """
@@ -609,37 +660,81 @@ STRICT RULES:
 
         def normalize_text(value: Any) -> str:
             return str(value).casefold().strip().replace("-", "").replace(" ", "")
-        
-        # Field mappings per country
-        field_mappings = {
+
+        # Side-aware field mappings: {country: {side: {ocr_field: form_field}}}
+        field_mappings_by_side = {
             "PK": {
-                "cnic_number": "cnic",
-                "name": "full_name",
-                "date_of_birth": "date_of_birth"
+                "front": {
+                    "cnic_number": "cnic",
+                    "name": "full_name",
+                    "name_english": "full_name",
+                    "date_of_birth": "date_of_birth",
+                },
+                "back": {
+                    # CNIC back has address, NOT the cardholder's name
+                    "address": "address_line1",
+                    "current_address": "address_line1",
+                    "permanent_address": "address_line1",
+                },
             },
             "IN": {
-                "aadhaar_number": "aadhaar",
-                "name": "full_name",
-                "date_of_birth": "date_of_birth"
+                "front": {
+                    "aadhaar_number": "aadhaar",
+                    "name": "full_name",
+                    "date_of_birth": "date_of_birth",
+                },
+                "back": {
+                    "address": "address_line1",
+                },
             },
             "GB": {
-                "surname": "last_name",
-                "given_names": "first_name",
-                "date_of_birth": "date_of_birth"
-            }
+                "front": {
+                    "surname": "last_name",
+                    "given_names": "first_name",
+                    "date_of_birth": "date_of_birth",
+                },
+                "photo_page": {
+                    "surname": "last_name",
+                    "given_names": "first_name",
+                    "date_of_birth": "date_of_birth",
+                },
+            },
+            "AE": {
+                "front": {
+                    "name": "full_name",
+                    "name_english": "full_name",
+                    "emirates_id_number": "emirates_id",
+                },
+                "back": {
+                    "date_of_birth": "date_of_birth",
+                    "gender": "gender",
+                },
+            },
         }
-        
-        mappings = field_mappings.get(country_code, {})
-        
+
+        # Look up side-specific mappings, fallback to front
+        country_sides = field_mappings_by_side.get(country_code, {})
+        mappings = country_sides.get(side, country_sides.get("front", {}))
+
+        # Check if user indicated renting/moved — skip address comparison
+        address_status = str(form_data.get("address_status", "") or "")
+        skip_address = address_status in (
+            "Moved from document address",
+            "Renting a different address",
+        )
+
         for ocr_field, form_field in mappings.items():
+            # Skip address fields if user is renting/moved
+            if skip_address and form_field == "address_line1":
+                continue
+
             ocr_value = extracted_fields.get(ocr_field)
             form_value = form_data.get(form_field)
-            
+
             if ocr_value and form_value:
-                # Normalize for comparison (case-insensitive)
                 ocr_normalized = normalize_text(ocr_value)
                 form_normalized = normalize_text(form_value)
-                
+
                 if ocr_normalized != form_normalized:
                     mismatches.append({
                         "field": form_field,
@@ -647,7 +742,7 @@ STRICT RULES:
                         "document_value": str(ocr_value),
                         "message": f"{form_field} on document doesn't match form"
                     })
-        
+
         return len(mismatches) == 0, mismatches
 
 

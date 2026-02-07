@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "WebFetch(domain:api.deriv.com)",
+      "WebFetch(domain:developers.deriv.com)",
+      "WebFetch(domain:deriv-com.github.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(venvScriptspip install websockets)",
+      "Bash(venvScriptspython -c \"from backend.risk_scorer import assess_risk, RiskLevel, Recommendation; print\\(''risk_scorer: OK''\\)\")",
+      "Bash(./venv/Scripts/pip.exe install:*)",
+      "Bash(./venv/Scripts/python.exe:*)",
+      "WebFetch(domain:lablab.ai)",
+      "Bash(ls:*)",
+      "Bash(\"./venv/Scripts/pip.exe\" freeze)"
+    ]
+  }
+}

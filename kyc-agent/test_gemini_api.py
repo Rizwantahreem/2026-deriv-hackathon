@@ -91,7 +91,7 @@ if test_image_path.exists():
         with open(test_image_path, "rb") as f:
             image_data = base64.b64encode(f.read()).decode()
 
-        model = genai.GenerativeModel(working_model or 'gemini-1.5-flash')
+        model = genai.GenerativeModel(working_model or 'gemini-2.5-flash')
         response = model.generate_content([
             "What do you see in this image? Reply briefly.",
             {"mime_type": "image/jpeg", "data": image_data}

@@ -42,7 +42,7 @@ class GeminiReasoner:
         if not self._initialized:
             genai.configure(api_key=self.api_key)
             self.model = genai.GenerativeModel(
-                model_name='gemini-1.5-flash',
+                model_name='gemini-2.5-flash',
                 generation_config={
                     'temperature': 0.7,  # More creative for friendly responses
                     'top_p': 0.9,
@@ -146,7 +146,15 @@ class GeminiReasoner:
             if json_start >= 0 and json_end > json_start:
                 json_str = response_text[json_start:json_end]
                 result = json.loads(json_str)
-                
+
+                # Ensure guidance fields are plain text strings, not dicts/JSON
+                for key in ("main_issue", "guidance", "quick_tip"):
+                    val = result.get(key)
+                    if isinstance(val, dict):
+                        result[key] = val.get("message", val.get("text", str(val)))
+                    elif val is None:
+                        result[key] = ""
+
                 # Add encouragement
                 result["encouragement"] = get_encouragement(attempt_number)
                 result["is_success"] = False
@@ -156,9 +164,13 @@ class GeminiReasoner:
             pass
             
         # If JSON parsing fails, extract text directly
+        # Strip any leading JSON artifacts from guidance text
+        guidance_text = response_text[:200]
+        if guidance_text.strip().startswith("{"):
+            guidance_text = issues[0].suggestion if issues and issues[0].suggestion else "Please retake the photo with better lighting and focus."
         return {
             "main_issue": issues[0].issue_type.value if issues else "UNKNOWN",
-            "guidance": response_text[:200],  # Truncate if too long
+            "guidance": guidance_text,
             "quick_tip": issues[0].suggestion[:30] if issues else "Retake photo",
             "confidence": 0.6,
             "encouragement": get_encouragement(attempt_number),

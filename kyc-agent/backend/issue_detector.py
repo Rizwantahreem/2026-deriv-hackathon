@@ -224,6 +224,9 @@ class IssueDetector:
             or extracted.get("date")
             or extracted.get("billDate")
             or extracted.get("statement_date")
+            or extracted.get("issue_date")
+            or extracted.get("due_date")
+            or extracted.get("invoice_date")
         )
         if not bill_date_value:
             issues.append(create_issue(

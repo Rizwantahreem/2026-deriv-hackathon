@@ -182,7 +182,11 @@ Provide your analysis in the following JSON format ONLY (no other text):
         "gender": "M/F or null",
         "expiry_date": "extracted expiry date in YYYY-MM-DD format or null",
         "father_name": "extracted father's name or null (for CNIC)",
-        "address": "extracted address or null"
+        "address": "extracted address or null",
+        "bill_date": "for utility bills/statements: the bill date, issue date, or due date in YYYY-MM-DD format or null",
+        "issue_date": "the issue date if visible in YYYY-MM-DD format or null",
+        "due_date": "the due date or payment date if visible in YYYY-MM-DD format or null",
+        "company_name": "for utility bills: the company/provider name or null"
     }},
     "issues_found": ["list of specific issues, e.g., 'Text is blurry in the name area'"],
     "confidence_score": 0.0-1.0,
@@ -195,7 +199,8 @@ IMPORTANT RULES:
 3. Look for common issues: glare, blur, shadows, finger covering part of document
 4. Extract text data where clearly visible - this is for verification purposes
 5. For ID numbers like CNIC, include the dashes (e.g., "12345-1234567-1")
-6. Return ONLY valid JSON, no markdown formatting"""
+6. For utility bills and bank statements: look for ANY date on the document (bill date, issue date, due date, statement date) and extract it
+7. Return ONLY valid JSON, no markdown formatting"""
 
         return prompt
     

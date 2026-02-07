@@ -60,7 +60,7 @@ st.set_page_config(
     page_title="KYC Onboarding",
     page_icon='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff444f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # =============================================================================
@@ -118,7 +118,8 @@ st.markdown("""
     }
     
     section[data-testid="stSidebar"] {
-        display: none;
+        background: #0d1117;
+        border-right: 1px solid #1e2a3a;
     }
     
     /* Header */
@@ -595,22 +596,19 @@ def compare_extracted_with_form(
 
             # Handle address comparison (combined current address)
             if ocr_field == "address":
+                # Skip address comparison if user is renting/moved
+                addr_status = str(form_data.get("address_status", "") or "")
+                if addr_status in ("Moved from document address", "Renting a different address"):
+                    break
                 # Skip address comparison if OCR address is non-Latin (needs translation)
                 if has_non_latin_chars(ocr_value):
                     break
-                form_parts = [
-                    form_data.get("address_line_1", ""),
-                    form_data.get("city", ""),
-                    form_data.get("province", ""),
-                    form_data.get("state", ""),
-                    form_data.get("postal_code", ""),
-                    form_data.get("postcode", ""),
-                    form_data.get("pin_code", ""),
-                    form_data.get("country", ""),
-                    form_data.get("country_of_residence", "")
-                ]
-                form_address = " ".join(p for p in form_parts if p)
-                if normalize_text(ocr_value) in normalize_text(form_address) or normalize_text(form_address) in normalize_text(ocr_value):
+                form_addr_parts = {
+                    "address_line_1": form_data.get("address_line_1", ""),
+                    "city": form_data.get("city", ""),
+                }
+                form_address = " ".join(p for p in form_addr_parts.values() if p)
+                if address_matches(ocr_value, form_addr_parts):
                     matched_fields += 1
                 else:
                     mismatches.append({
@@ -869,8 +867,36 @@ def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = 
     score = analysis.get("score", 0)
     is_ready = analysis.get("is_ready", False)
     issues = analysis.get("issues", [])
-    guidance = analysis.get("guidance", "")
+    guidance_raw = analysis.get("guidance", "")
     data_match_score = analysis.get("data_match_score", None)
+
+    # Sanitize guidance — strip any leaked JSON regardless of format
+    import json as _json
+    guidance = ""
+    if isinstance(guidance_raw, dict):
+        guidance = str(guidance_raw.get("guidance", guidance_raw.get("message", guidance_raw.get("text", ""))))
+    elif isinstance(guidance_raw, str):
+        text = guidance_raw.strip()
+        # Check if text contains JSON anywhere (even partial)
+        if "{" in text and ("main_issue" in text or "guidance" in text):
+            # Try to extract JSON object from the text
+            json_start = text.find("{")
+            json_end = text.rfind("}") + 1
+            if json_end > json_start:
+                try:
+                    parsed = _json.loads(text[json_start:json_end])
+                    guidance = str(parsed.get("guidance", parsed.get("main_issue", "")))
+                except Exception:
+                    guidance = ""
+            else:
+                guidance = ""
+        elif text.startswith("{") or text.startswith('"'):
+            guidance = ""  # Drop any JSON-like text
+        else:
+            guidance = text
+    # Final safety — never display anything with curly braces
+    if guidance and "{" in guidance:
+        guidance = ""
 
     # Score indicator with color
     if score >= 80:
@@ -897,7 +923,7 @@ def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = 
         with col3:
             st.write(f"**{status_text}**")
             if guidance:
-                st.caption(guidance)
+                st.markdown(f'<p style="color:#8892a4;font-size:0.85rem;margin:4px 0 0;">{guidance}</p>', unsafe_allow_html=True)
     else:
         col1, col2 = st.columns([1, 3])
         with col1:
@@ -905,7 +931,7 @@ def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = 
         with col2:
             st.write(f"**{status_text}**")
             if guidance:
-                st.caption(guidance)
+                st.markdown(f'<p style="color:#8892a4;font-size:0.85rem;margin:4px 0 0;">{guidance}</p>', unsafe_allow_html=True)
     
     # Manual review badge on document card
     if show_manual_review:
@@ -1120,29 +1146,26 @@ def compare_with_form_data(extracted_data: dict, doc_key: str) -> list:
 
             # Handle address comparison (combined current address)
             if ocr_field == "address":
+                # Skip address comparison if user is renting/moved
+                addr_status = str(form_data.get("address_status", "") or "")
+                if addr_status in ("Moved from document address", "Renting a different address"):
+                    break
                 # Skip address comparison if OCR address is non-Latin (needs translation)
                 if has_non_latin_chars(ocr_value):
                     break
-                form_parts = [
-                    form_data.get("address_line_1", ""),
-                    form_data.get("city", ""),
-                    form_data.get("province", ""),
-                    form_data.get("state", ""),
-                    form_data.get("postal_code", ""),
-                    form_data.get("postcode", ""),
-                    form_data.get("pin_code", ""),
-                    form_data.get("country", ""),
-                    form_data.get("country_of_residence", "")
-                ]
-                form_address = " ".join(p for p in form_parts if p)
-                if normalize_text(ocr_value) not in normalize_text(form_address) and normalize_text(form_address) not in normalize_text(ocr_value):
+                form_addr_parts = {
+                    "address_line_1": form_data.get("address_line_1", ""),
+                    "city": form_data.get("city", ""),
+                }
+                form_address = " ".join(p for p in form_addr_parts.values() if p)
+                if not address_matches(ocr_value, form_addr_parts):
                     mismatches.append({
                         "field": "Address",
                         "form_value": form_address.strip(),
                         "doc_value": ocr_value
                     })
                 break
-    
+
     # Store mismatches in session state for review step
     st.session_state.data_mismatches = mismatches
     st.session_state.manual_review_required = len(mismatches) > 0
@@ -1193,6 +1216,39 @@ def normalize_text(value: str) -> str:
 def has_non_latin_chars(value: str) -> bool:
     """Detect non-Latin characters (e.g., Urdu/Arabic) for address comparison."""
     return any(ord(c) > 127 for c in str(value))
+
+
+def address_matches(ocr_address: str, form_parts: dict) -> bool:
+    """
+    Smart address comparison — checks if key parts of the form address
+    appear in the OCR-extracted address. OCR often adds extra text like
+    country name, province, or postal code that the user didn't enter.
+
+    Returns True if enough key parts match.
+    """
+    ocr_norm = normalize_text(ocr_address)
+    if not ocr_norm:
+        return True  # Can't compare empty OCR
+
+    # Collect significant form address tokens (street, city, postal)
+    significant_parts = []
+    for key in ("address_line_1", "city"):
+        val = form_parts.get(key, "")
+        if val:
+            # Split address_line_1 into tokens for partial matching
+            tokens = normalize_text(val).split() if key == "address_line_1" else [normalize_text(val)]
+            # Only keep tokens with 3+ chars (skip "st", "no", etc.)
+            significant_parts.extend(t for t in tokens if len(t) >= 3)
+
+    if not significant_parts:
+        return True  # No form data to compare
+
+    # Count how many significant parts appear in the OCR text
+    hits = sum(1 for part in significant_parts if part in ocr_norm)
+    ratio = hits / len(significant_parts) if significant_parts else 1.0
+
+    # At least 50% of key parts must match
+    return ratio >= 0.5
 
 
 def dates_match(date1: str, date2: str) -> bool:
@@ -1540,8 +1596,7 @@ def render_step_documents():
                                     side="front"
                                 )
                                 st.session_state.document_analysis[analysis_key] = analysis
-                                # Log for debugging
-                                print(f"Analysis result for {front_key}: score={analysis.get('score')}, success={analysis.get('success')}, error={analysis.get('error')}")
+                                pass  # Analysis stored in session state
 
                         # Show analysis result
                         analysis = st.session_state.document_analysis.get(analysis_key, {})
@@ -1625,7 +1680,6 @@ def render_step_documents():
                                         side="back"
                                     )
                                     st.session_state.document_analysis[analysis_key] = analysis
-                                    print(f"Analysis result for {back_key}: score={analysis.get('score')}, success={analysis.get('success')}")
 
                             # Show analysis result
                             analysis = st.session_state.document_analysis.get(analysis_key, {})
@@ -1698,41 +1752,88 @@ def render_step_review():
     
     st.markdown(f'''<div class="section-header">{ICONS['check_circle']} Review Your Application - {schema.flag} {schema.country_name}</div>''', unsafe_allow_html=True)
     st.caption("Please review your information before submitting")
-    
-    # Manual review banner for mismatches (Deriv-style compliance)
-    if st.session_state.manual_review_required:
+
+    # ── Gather ALL issues & mismatches from every document analysis ──
+    all_mismatches = list(st.session_state.data_mismatches or [])
+    all_issues = []
+    has_unresolved_issues = False
+
+    for key, analysis in st.session_state.document_analysis.items():
+        if not isinstance(analysis, dict):
+            continue
+        # Collect mismatches from each analysis result
+        doc_mismatches = analysis.get("data_mismatches", [])
+        for mm in doc_mismatches:
+            if mm not in all_mismatches:
+                all_mismatches.append(mm)
+        # Collect blocking issues
+        for issue in analysis.get("issues", []):
+            if issue.get("severity") == "high":
+                has_unresolved_issues = True
+                all_issues.append(issue)
+        # Low quality score
+        if analysis.get("score", 100) < 50:
+            has_unresolved_issues = True
+
+    needs_manual_review = st.session_state.manual_review_required or bool(all_mismatches) or has_unresolved_issues
+
+    # ── Show warnings ──
+    if needs_manual_review:
         st.markdown(f'''
-            <div class="warning-card">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    {ICONS['alert']} <strong>Manual Review Required</strong>
+            <div style="padding:14px 18px;background:#1f1510;border:1px solid #f59e0b;border-radius:10px;margin:12px 0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    {ICONS['alert']} <strong style="color:#f59e0b;">Manual Review Required</strong>
                 </div>
-                <p style="margin:0;">
-                    Some document data does not match the form. Your application can proceed,
-                    but it will be sent for manual verification per compliance requirements.
+                <p style="color:#d4a054;margin:0;font-size:0.9rem;">
+                    Your application will be sent for manual verification by the compliance team.
+                    This may add 1-2 business days to the review time.
                 </p>
             </div>
         ''', unsafe_allow_html=True)
 
-    # Show any data mismatches from document analysis
-    if st.session_state.data_mismatches:
+    if all_mismatches:
         st.markdown(f'''
-            <div class="warning-card">
+            <div style="padding:14px 18px;background:#1a1020;border:1px solid #ff4d6a;border-radius:10px;margin:12px 0;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    {ICONS['alert']} <strong style="color:#856404;">Data Mismatch Warning</strong>
+                    {ICONS['alert']} <strong style="color:#ff4d6a;">Data Mismatches Detected ({len(all_mismatches)})</strong>
                 </div>
-                <p style="color:#856404;margin:0;">
-                    Some information in your documents doesn't match your form entries. 
-                    Please verify before submitting.
+                <p style="color:#cc8899;margin:0 0 8px;font-size:0.88rem;">
+                    The following information in your documents doesn't match your form entries.
+                    Go back to fix them, or submit for manual review.
                 </p>
             </div>
         ''', unsafe_allow_html=True)
-        
-        for mismatch in st.session_state.data_mismatches:
+
+        for mismatch in all_mismatches:
+            field = mismatch.get("field", "?")
+            form_val = mismatch.get("form_value", mismatch.get("form", "?"))
+            doc_val = mismatch.get("doc_value", mismatch.get("document", "?"))
             st.markdown(f'''
-                <div style="padding:8px 12px;background:#fff;border-left:3px solid #ffc107;margin:4px 0;border-radius:0 4px 4px 0;">
-                    <strong>{mismatch['field']}</strong>: 
-                    You entered "<span style="color:#dc3545;">{mismatch['form_value']}</span>" 
-                    but document shows "<span style="color:#28a745;">{mismatch['doc_value']}</span>"
+                <div style="padding:10px 14px;background:#141928;border-left:3px solid #ff4d6a;margin:4px 0;border-radius:0 6px 6px 0;">
+                    <strong style="color:#e0e4eb;">{field}</strong><br/>
+                    <span style="color:#ff4d6a;">Form: {form_val}</span>
+                    <span style="color:#6c757d;margin:0 6px;">vs</span>
+                    <span style="color:#00d084;">Document: {doc_val}</span>
+                </div>
+            ''', unsafe_allow_html=True)
+        st.markdown("")
+
+    if has_unresolved_issues:
+        st.markdown(f'''
+            <div style="padding:14px 18px;background:#1a1020;border:1px solid #ffb347;border-radius:10px;margin:12px 0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    {ICONS['alert']} <strong style="color:#ffb347;">Document Quality Issues</strong>
+                </div>
+                <p style="color:#d4a054;margin:0;font-size:0.88rem;">
+                    Some documents have quality issues that may delay verification. Consider going back to re-upload clearer images.
+                </p>
+            </div>
+        ''', unsafe_allow_html=True)
+        for issue in all_issues[:3]:
+            st.markdown(f'''
+                <div style="padding:8px 14px;background:#141928;border-left:3px solid #ffb347;margin:4px 0;border-radius:0 6px 6px 0;">
+                    <strong style="color:#ffb347;">{issue.get("title", "Issue")}</strong>:
+                    <span style="color:#d0d5de;">{issue.get("description", "")}</span>
                 </div>
             ''', unsafe_allow_html=True)
         st.markdown("")
@@ -1832,8 +1933,37 @@ def render_step_confirmation():
         st.rerun()
         return
     
-    st.snow()
-    
+    # Tiny round confetti dots falling animation
+    st.markdown("""
+    <style>
+    @keyframes confetti-fall {
+        0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+    .confetti-container {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; overflow: hidden; z-index: 9999;
+    }
+    .confetti-dot {
+        position: absolute; top: -10px; border-radius: 50%;
+        animation: confetti-fall linear forwards;
+    }
+    </style>
+    <div class="confetti-container">""" + "".join([
+        f'<div class="confetti-dot" style="left:{i*4.3:.0f}%; width:{s}px; height:{s}px; '
+        f'background:{c}; animation-duration:{d}s; animation-delay:{dl}s;"></div>'
+        for i, (s, c, d, dl) in enumerate([
+            (5, "#ff444f", 3.0, 0.0), (4, "#00d084", 3.5, 0.2), (6, "#4da6ff", 2.8, 0.4),
+            (3, "#ffb347", 3.2, 0.1), (5, "#ff444f", 3.6, 0.5), (4, "#00d084", 2.9, 0.3),
+            (6, "#ffd700", 3.1, 0.6), (3, "#4da6ff", 3.4, 0.15), (5, "#ffb347", 2.7, 0.45),
+            (4, "#ff444f", 3.3, 0.25), (6, "#00d084", 3.0, 0.55), (3, "#ffd700", 3.7, 0.35),
+            (5, "#4da6ff", 2.9, 0.1), (4, "#ff444f", 3.2, 0.7), (6, "#ffb347", 3.5, 0.05),
+            (3, "#00d084", 2.8, 0.6), (5, "#ffd700", 3.4, 0.3), (4, "#4da6ff", 3.1, 0.5),
+            (6, "#ff444f", 2.6, 0.2), (3, "#00d084", 3.3, 0.4), (5, "#ffb347", 3.0, 0.15),
+            (4, "#ffd700", 3.6, 0.55), (6, "#4da6ff", 2.7, 0.35), (3, "#ff444f", 3.2, 0.65),
+        ])
+    ]) + "</div>", unsafe_allow_html=True)
+
     st.markdown(f'''<div style="text-align:center;padding:40px 0;">
         <div style="margin-bottom:16px;">{ICONS['check_circle'].replace('width="20" height="20"', 'width="64" height="64"')}</div>
         <h1 style="color:#28a745;margin:0;">Application Submitted!</h1>
@@ -1875,13 +2005,65 @@ def main():
     """Main application entry point."""
     init_onboarding_state()
 
+    # ── Sidebar Navigation ──
+    ADMIN_PASSWORD = "deriv2026"  # Change for production
+
+    with st.sidebar:
+        st.markdown(f"""
+        <div style="text-align:center;padding:10px 0 20px;">
+            {ICONS['shield']}
+            <h3 style="margin:8px 0 0;color:#ff444f;">KYC Agent</h3>
+            <p style="color:#888;font-size:0.8rem;margin:2px 0 0;">Powered by Deriv AI</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Admin Access ──
+        st.markdown("---")
+        if not st.session_state.get("admin_authenticated", False):
+            with st.expander("Admin Access"):
+                pwd = st.text_input("Password", type="password", key="admin_pwd")
+                if st.button("Login", key="admin_login_btn"):
+                    if pwd == ADMIN_PASSWORD:
+                        st.session_state.admin_authenticated = True
+                        st.rerun()
+                    else:
+                        st.error("Incorrect password")
+        else:
+            page = st.radio(
+                "Navigation",
+                ["Client KYC Portal", "Compliance Dashboard"],
+                key="nav_page",
+                label_visibility="collapsed",
+            )
+            st.markdown("---")
+            from backend.deriv_api import get_submission_manager
+            _mgr = get_submission_manager()
+            _stats = _mgr.get_analytics()
+            st.markdown("**Session Stats**")
+            st.caption(f"Submissions: {_stats.get('total', 0)}")
+            st.caption(f"Pending Review: {_stats.get('pending_review', 0)}")
+            st.caption(f"High Risk: {_stats.get('high_risk_count', 0)}")
+            st.markdown("---")
+            if st.button("Logout", key="admin_logout_btn"):
+                st.session_state.admin_authenticated = False
+                st.rerun()
+
+    # ── Compliance Dashboard View (admin only) ──
+    if st.session_state.get("admin_authenticated") and st.session_state.get("nav_page") == "Compliance Dashboard":
+        from frontend.compliance_dashboard import render_compliance_dashboard
+        from backend.deriv_api import get_submission_manager
+        render_compliance_dashboard(get_submission_manager())
+        return
+
+    # ── Client KYC Portal View (default) ──
+
     # Auto-scroll to top when navigating between steps
     if "prev_onboarding_step" not in st.session_state:
         st.session_state.prev_onboarding_step = st.session_state.onboarding_step
     elif st.session_state.prev_onboarding_step != st.session_state.onboarding_step:
         scroll_to_top()
         st.session_state.prev_onboarding_step = st.session_state.onboarding_step
-    
+
     # Header with professional icon
     st.markdown(f'''
     <div class="kyc-header">
@@ -1889,11 +2071,11 @@ def main():
         <p style="color: #6c757d;">Secure identity verification for Deriv</p>
     </div>
     ''', unsafe_allow_html=True)
-    
+
     # Render step indicator (except for confirmation)
     if st.session_state.onboarding_step < 5:
         render_step_indicator(st.session_state.onboarding_step)
-    
+
     # Render current step
     if st.session_state.onboarding_step == 1:
         render_step_country()
@@ -1905,7 +2087,7 @@ def main():
         render_step_review()
     elif st.session_state.onboarding_step == 5:
         render_step_confirmation()
-    
+
     # Footer
     st.markdown("---")
     st.caption("Your data is encrypted and secure | Powered by Deriv AI")

@@ -60,5 +60,7 @@ temp_uploads/
 # Keys file
 keys.txt
 
-docs/
-kyc-agent/docs
+# Streamlit secrets (NOT config.toml — that should be committed)
+.streamlit/secrets.toml
+
+kyc-agent/docs/*

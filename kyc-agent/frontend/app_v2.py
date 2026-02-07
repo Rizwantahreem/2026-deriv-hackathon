@@ -41,7 +41,7 @@ st.set_page_config(
     page_title="KYC Document Verification",
     page_icon="📄",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # ============================================================================
@@ -51,6 +51,9 @@ st.set_page_config(
 from backend.ocr_service import GeminiOCR, OCRResult, DocumentQuality
 from backend.usage_tracker import UsageTracker, UsageLevel
 from backend.form_validator import validate_form_data, validate_cnic, validate_aadhaar, validate_pan
+from backend.risk_scorer import assess_risk, RiskLevel, Recommendation
+from backend.deriv_api import get_submission_manager, submit_document
+from frontend.compliance_dashboard import render_compliance_dashboard
 
 
 # ============================================================================
@@ -382,7 +385,8 @@ def render_ocr_result(result: OCRResult, form_data: Optional[Dict] = None, count
         all_match, mismatches = ocr_service.compare_with_form(
             result.extracted_fields,
             form_data,
-            country_code
+            country_code,
+            side=side,
         )
 
         if all_match and mismatches == []:
@@ -778,7 +782,8 @@ def render_document_upload(
             all_match, mismatches = ocr_service.compare_with_form(
                 ocr_result.extracted_fields,
                 form_data,
-                country_code
+                country_code,
+                side=side,
             )
             has_mismatches = len(mismatches) > 0
         
@@ -887,13 +892,77 @@ def render_document_upload(
                     side=side
                 )
 
-                # Store result with raw OCR data
-                # Success will be recalculated dynamically based on form data matching
+                # Validate utility bill age (must be within 3 months)
+                if doc_type == "utility_bill" and result.success and result.extracted_fields:
+                    bill_date_str = (
+                        result.extracted_fields.get("bill_date")
+                        or result.extracted_fields.get("date")
+                        or result.extracted_fields.get("statement_date")
+                    )
+                    if bill_date_str:
+                        from datetime import datetime as _dt, date as _date
+                        _parsed_bill_date = None
+                        for _fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y", "%d %b %Y", "%d %B %Y", "%b %d, %Y", "%B %d, %Y"):
+                            try:
+                                _parsed_bill_date = _dt.strptime(str(bill_date_str).strip(), _fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        if _parsed_bill_date:
+                            _today = _date.today()
+                            _m = _today.month - 3
+                            _y = _today.year
+                            while _m <= 0:
+                                _m += 12
+                                _y -= 1
+                            _cutoff = _date(_y, _m, min(_today.day, 28))
+                            if _parsed_bill_date < _cutoff:
+                                result.issues.append({
+                                    "type": "BILL_EXPIRED",
+                                    "severity": "blocking",
+                                    "message": f"Bill dated {bill_date_str} is older than 3 months. Please upload a recent bill.",
+                                    "suggestion": "Upload a bill dated within the last 3 months"
+                                })
+                                result.quality_score = min(result.quality_score, 30)
+                    else:
+                        result.issues.append({
+                            "type": "MISSING_DATE",
+                            "severity": "warning",
+                            "message": "Could not detect the bill date on this document",
+                            "suggestion": "Upload a bill where the date is clearly visible"
+                        })
+
+                # Run AI risk scoring
+                form_data = st.session_state.get("form_data", {})
+                mismatches_list = []
+                if form_data and result.extracted_fields:
+                    from backend.ocr_service import ocr_service
+                    _, mismatches_list = ocr_service.compare_with_form(
+                        result.extracted_fields, form_data, country_code,
+                        side=side,
+                    )
+
+                risk_result = assess_risk(
+                    ocr_data=result.extracted_fields or {},
+                    form_data=form_data,
+                    quality_score=result.quality_score,
+                    mismatches=mismatches_list,
+                    country_code=country_code,
+                    document_type=doc_type,
+                )
+
+                # Store result with raw OCR data and risk assessment
                 st.session_state.documents[storage_key] = {
                     "ocr_result": result,
                     "file_info": file_info,
-                    "raw_quality_score": result.quality_score,  # Store original score
-                    "image_bytes": uploaded_file.getvalue()  # Store for potential re-analysis
+                    "raw_quality_score": result.quality_score,
+                    "image_bytes": uploaded_file.getvalue(),
+                    "risk_level": risk_result.risk_level.value,
+                    "risk_score": risk_result.risk_score,
+                    "risk_factors": risk_result.risk_factors,
+                    "risk_recommendation": risk_result.recommendation.value,
+                    "risk_reasoning": risk_result.reasoning,
+                    "mismatches": mismatches_list,
                 }
 
                 st.rerun()
@@ -928,12 +997,12 @@ def create_mock_ocr_result(doc_type: str, side: str) -> OCRResult:
 # ============================================================================
 
 def render_step4_review():
-    """Render review and submit step."""
-    st.header(" Step 4: Review & Submit")
-    
+    """Render review and submit step with risk assessment."""
+    st.header("Step 4: Review & Submit")
+
     # Summary
-    st.markdown("### 📋 Application Summary")
-    
+    st.markdown("### Application Summary")
+
     # Personal Info
     st.markdown("**Personal Information:**")
     form_data = st.session_state.form_data
@@ -941,41 +1010,127 @@ def render_step4_review():
         if value:
             label = key.replace("_", " ").title()
             st.markdown(f"- **{label}:** {value}")
-    
+
     st.markdown("---")
-    
-    # Documents
-    st.markdown("**Documents Uploaded:**")
+
+    # Documents with risk badges
+    st.markdown("**Documents & Risk Assessment:**")
+    overall_risk_score = 0
+    overall_risk_level = "LOW"
+    doc_count = 0
+
     for key, doc_info in st.session_state.documents.items():
-        if doc_info.get("success"):
-            result = doc_info["ocr_result"]
-            file_info = doc_info["file_info"]
-            st.markdown(f"-  **{key}** - {file_info['name']} (Score: {result.quality_score}/100)")
-    
+        result = doc_info.get("ocr_result")
+        if not result:
+            continue
+
+        file_info = doc_info.get("file_info", {})
+        quality = result.quality_score
+        risk_lvl = doc_info.get("risk_level", "LOW")
+        risk_scr = doc_info.get("risk_score", 0)
+        recommendation = doc_info.get("risk_recommendation", "manual-review")
+
+        # Risk badge colors
+        risk_colors = {"LOW": "#28a745", "MEDIUM": "#ffc107", "HIGH": "#dc3545"}
+        risk_icons = {"LOW": "🟢", "MEDIUM": "🟡", "HIGH": "🔴"}
+        rec_labels = {"auto-approve": "Auto-Approve", "manual-review": "Manual Review", "reject": "Needs Resubmission"}
+
+        st.markdown(f"""
+        <div style="background:#f8f9fa; border-radius:8px; padding:15px; margin:8px 0; border-left:4px solid {risk_colors.get(risk_lvl, '#6c757d')}; color:#212529;">
+            <strong style="color:#212529;">{risk_icons.get(risk_lvl, '⚪')} {key.replace('_', ' ').title()}</strong>
+            — {file_info.get('name', 'document')}
+            <br><span style="color:#495057;">Quality: {quality}/100 | Risk: <strong style="color:{risk_colors.get(risk_lvl, '#6c757d')}">{risk_lvl}</strong> ({risk_scr}/100) | Recommendation: {rec_labels.get(recommendation, recommendation)}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Show risk factors if not LOW
+        if risk_lvl != "LOW" and doc_info.get("risk_factors"):
+            with st.expander(f"Risk factors for {key}", expanded=False):
+                for rf in doc_info["risk_factors"]:
+                    sev_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(rf.get("severity", ""), "⚪")
+                    st.markdown(f"- {sev_icon} **{rf.get('factor', '')}**: {rf.get('detail', '')}")
+
+        # Track overall risk
+        overall_risk_score = max(overall_risk_score, risk_scr)
+        if risk_lvl == "HIGH":
+            overall_risk_level = "HIGH"
+        elif risk_lvl == "MEDIUM" and overall_risk_level != "HIGH":
+            overall_risk_level = "MEDIUM"
+        doc_count += 1
+
+    # Overall risk summary
+    if doc_count > 0:
+        st.markdown("---")
+        risk_colors = {"LOW": "#28a745", "MEDIUM": "#ffc107", "HIGH": "#dc3545"}
+        st.markdown(f"""
+        <div style="background:#1a1a2e; border-radius:10px; padding:20px; margin:10px 0; text-align:center;">
+            <h3 style="color:#fff; margin:0;">Overall Risk Assessment</h3>
+            <p style="color:{risk_colors.get(overall_risk_level, '#aaa')}; font-size:1.5rem; font-weight:bold; margin:10px 0;">
+                {overall_risk_level} ({overall_risk_score}/100)
+            </p>
+            <p style="color:#aaa; margin:0;">
+                {"Ready for submission" if overall_risk_level == "LOW" else "Will be flagged for compliance review" if overall_risk_level == "MEDIUM" else "High risk — review recommended before submission"}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.markdown("---")
-    
+
     # Confirmation
     confirm = st.checkbox("I confirm that all information provided is accurate and the documents are genuine.")
-    
+
     # Navigation
     col1, col2 = st.columns(2)
-    
+
     with col1:
         if st.button("← Back to Documents"):
             st.session_state.step = 3
             st.rerun()
-    
+
     with col2:
         if confirm:
-            if st.button(" Submit Application", type="primary"):
-                with st.spinner("Submitting application..."):
-                    # Mock submission
-                    import time
-                    time.sleep(1)
+            if st.button("Submit to Deriv", type="primary"):
+                with st.spinner("Submitting to Deriv API..."):
+                    _submit_to_deriv()
                     st.session_state.submitted = True
                     st.rerun()
         else:
-            st.button(" Submit Application", type="primary", disabled=True)
+            st.button("Submit to Deriv", type="primary", disabled=True)
+
+
+def _submit_to_deriv():
+    """Submit all documents to Deriv via WebSocket API (with mock fallback)."""
+    import hashlib
+    form_data = st.session_state.form_data
+    country_code = st.session_state.country_code
+
+    for key, doc_info in st.session_state.documents.items():
+        result = doc_info.get("ocr_result")
+        if not result:
+            continue
+
+        # Parse key to get doc_type and side
+        parts = key.rsplit("_", 1)
+        doc_type = parts[0] if len(parts) > 1 else key
+        side = parts[-1] if len(parts) > 1 else "front"
+
+        image_bytes = doc_info.get("image_bytes", b"")
+        checksum = hashlib.md5(image_bytes).hexdigest() if image_bytes else ""
+
+        submit_document(
+            document_type=doc_type,
+            side=side,
+            image_data="",  # Don't pass full base64 to save memory
+            checksum=checksum,
+            country_code=country_code,
+            issue_score=result.quality_score,
+            form_data=form_data,
+            ocr_data=result.extracted_fields or {},
+            mismatches=doc_info.get("mismatches", []),
+            risk_level=doc_info.get("risk_level", "LOW"),
+            risk_score=doc_info.get("risk_score", 0),
+            risk_factors=doc_info.get("risk_factors", []),
+        )
 
 
 def render_success():
@@ -1009,21 +1164,57 @@ def render_success():
 def main():
     """Main application entry point."""
     init_session_state()
-    
-    # Header
-    st.title("📄 KYC Document Verification")
+
+    # ================================================================
+    # SIDEBAR NAVIGATION
+    # ================================================================
+    with st.sidebar:
+        st.markdown("### Navigation")
+        page = st.radio(
+            "Select view",
+            ["Client KYC Portal", "Compliance Dashboard"],
+            key="nav_page",
+            label_visibility="collapsed"
+        )
+
+        st.markdown("---")
+        st.markdown("**Deriv API Status**")
+        from config.settings import settings
+        has_token = bool(settings.DERIV_API_TOKEN)
+        st.markdown(f"- App ID: `{settings.DERIV_APP_ID}`")
+        st.markdown(f"- API Token: {'Connected' if has_token else 'Demo Mode (mock)'}")
+        st.markdown(f"- Gemini AI: {'Active' if os.getenv('GEMINI_API_KEY') else 'Not configured'}")
+
+        st.markdown("---")
+        manager = get_submission_manager()
+        analytics = manager.get_analytics()
+        st.markdown("**Session Stats**")
+        st.markdown(f"- Submissions: {analytics['total']}")
+        st.markdown(f"- Pending Review: {analytics['pending_review']}")
+        st.markdown(f"- High Risk: {analytics['high_risk_count']}")
+
+    # ================================================================
+    # PAGE ROUTING
+    # ================================================================
+    if page == "Compliance Dashboard":
+        manager = get_submission_manager()
+        render_compliance_dashboard(manager)
+        return
+
+    # ---- Client KYC Portal ----
+    st.title("KYC Document Verification")
     st.markdown("Complete your identity verification in a few simple steps.")
-    
+
     # Check if submitted
     if st.session_state.submitted:
         render_success()
         return
-    
+
     # Progress indicator
     render_progress_indicator()
-    
+
     st.markdown("---")
-    
+
     # Render current step
     if st.session_state.step == 1:
         render_step1_country()
@@ -1033,10 +1224,10 @@ def main():
         render_step3_documents()
     elif st.session_state.step == 4:
         render_step4_review()
-    
+
     # Footer
     st.markdown("---")
-    st.caption("KYC Document Verification Agent | Powered by AI")
+    st.caption("KYC Document Verification Agent | Built for Deriv | Powered by Gemini AI")
 
 
 if __name__ == "__main__":

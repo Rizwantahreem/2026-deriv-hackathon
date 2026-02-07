@@ -731,12 +731,12 @@ def render_kyc_form(
     validation_result = validator.validate_form(form_data)
     
     # Debug: Always show form data and errors for troubleshooting
-    with st.expander("Debug: Form Data & Validation", expanded=False):
-        st.write("**Form Data:**")
-        st.json(form_data)
-        st.write("**Validation Errors:**")
-        st.json(validation_result["errors"])
-        st.write(f"**Is Valid:** {validation_result['is_valid']}")
+    # with st.expander("Debug: Form Data & Validation", expanded=False):
+    #     st.write("**Form Data:**")
+    #     st.json(form_data)
+    #     st.write("**Validation Errors:**")
+    #     st.json(validation_result["errors"])
+    #     st.write(f"**Is Valid:** {validation_result['is_valid']}")
     
     # Show status (no button - navigation is in kyc_onboarding.py)
     if validation_result["is_valid"]:

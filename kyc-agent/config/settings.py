@@ -21,14 +21,16 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(True, description="Enable debug mode")
     DEMO_MODE: bool = Field(True, description="Use mock Deriv responses (no real account needed)")
     
-    # Deriv Configuration (reference only - for mock responses)
+    # Deriv Configuration
+    DERIV_APP_ID: int = Field(1089, description="Deriv API app_id (1089 = public demo)")
+    DERIV_API_TOKEN: Optional[str] = Field(None, description="Deriv API token for authenticated calls")
     DERIV_WS_URL: str = Field(
         "wss://ws.derivws.com/websockets/v3",
-        description="Deriv WebSocket URL (reference for mock mode)"
+        description="Deriv WebSocket URL"
     )
     DERIV_API_URL: str = Field(
         "https://api.deriv.com",
-        description="Deriv API URL (reference for mock mode)"
+        description="Deriv REST API URL"
     )
     
     # Server Configuration
