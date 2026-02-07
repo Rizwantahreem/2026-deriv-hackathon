@@ -1,0 +1,490 @@
+{
+  "countries": {
+    "PK": {
+      "name": "Pakistan",
+      "flag": "🇵🇰",
+      "currency": "PKR",
+      "language": "ur",
+      
+      "personal_fields": [
+        {
+          "id": "full_name",
+          "label": "Full Name (as on CNIC)",
+          "type": "text",
+          "required": true,
+          "placeholder": "Muhammad Ahmed Khan",
+          "help": "Enter your name exactly as it appears on your CNIC"
+        },
+        {
+          "id": "full_name_urdu",
+          "label": "Full Name (Urdu)",
+          "type": "text",
+          "required": false,
+          "placeholder": "محمد احمد خان",
+          "help": "Optional: Name in Urdu script"
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true,
+          "min_age": 18,
+          "max_age": 100
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "required": true,
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "cnic",
+          "label": "CNIC Number",
+          "type": "id",
+          "required": true,
+          "placeholder": "12345-1234567-1",
+          "format": "#####-#######-#",
+          "validation": {
+            "pattern": "^\\d{5}-\\d{7}-\\d{1}$",
+            "length": 15,
+            "error": "CNIC must be in format: 12345-1234567-1"
+          }
+        },
+        {
+          "id": "address_line1",
+          "label": "Address",
+          "type": "text",
+          "required": true,
+          "placeholder": "House #, Street, Area"
+        },
+        {
+          "id": "city",
+          "label": "City",
+          "type": "select",
+          "required": true,
+          "options": ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Other"]
+        },
+        {
+          "id": "province",
+          "label": "Province",
+          "type": "select",
+          "required": true,
+          "options": ["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Gilgit-Baltistan"]
+        },
+        {
+          "id": "postal_code",
+          "label": "Postal Code",
+          "type": "text",
+          "required": true,
+          "placeholder": "44000",
+          "validation": {
+            "pattern": "^\\d{5}$",
+            "length": 5,
+            "error": "Postal code must be 5 digits"
+          }
+        },
+        {
+          "id": "phone",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": true,
+          "placeholder": "03001234567",
+          "validation": {
+            "pattern": "^03\\d{9}$",
+            "length": 11,
+            "error": "Mobile must start with 03 and be 11 digits"
+          }
+        }
+      ],
+      
+      "documents": {
+        "poi": {
+          "type": "cnic",
+          "name": "CNIC (National ID)",
+          "description": "Computerized National Identity Card",
+          "sides": ["front", "back"],
+          "accepted_formats": ["jpg", "jpeg", "png"],
+          "max_size_mb": 5,
+          "ocr_fields": ["cnic_number", "name", "father_name", "date_of_birth", "expiry_date"],
+          "tips": [
+            "Place CNIC on a dark, flat surface",
+            "Ensure all text is clearly readable",
+            "All 4 corners must be visible",
+            "Avoid glare on the hologram"
+          ]
+        },
+        "poa": {
+          "type": "utility_bill",
+          "name": "Utility Bill",
+          "description": "Electricity, Gas, or Water bill",
+          "sides": ["front"],
+          "accepted_formats": ["jpg", "jpeg", "png", "pdf"],
+          "max_size_mb": 5,
+          "max_age_months": 3,
+          "ocr_fields": ["name", "address", "bill_date"],
+          "tips": [
+            "Bill must be less than 3 months old",
+            "Your name and address must be visible",
+            "Bill date must be clearly readable"
+          ]
+        }
+      }
+    },
+    
+    "IN": {
+      "name": "India",
+      "flag": "🇮🇳",
+      "currency": "INR",
+      "language": "hi",
+      
+      "personal_fields": [
+        {
+          "id": "full_name",
+          "label": "Full Name (as on Aadhaar)",
+          "type": "text",
+          "required": true,
+          "placeholder": "Rahul Sharma",
+          "help": "Enter your name exactly as it appears on your Aadhaar card"
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true,
+          "min_age": 18,
+          "max_age": 100
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "required": true,
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "aadhaar",
+          "label": "Aadhaar Number",
+          "type": "id",
+          "required": true,
+          "placeholder": "1234 5678 9012",
+          "format": "#### #### ####",
+          "validation": {
+            "pattern": "^\\d{4}\\s?\\d{4}\\s?\\d{4}$",
+            "length": 14,
+            "error": "Aadhaar must be 12 digits (format: 1234 5678 9012)"
+          }
+        },
+        {
+          "id": "pan",
+          "label": "PAN Number",
+          "type": "id",
+          "required": false,
+          "placeholder": "ABCDE1234F",
+          "validation": {
+            "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$",
+            "length": 10,
+            "error": "PAN must be 10 characters (format: ABCDE1234F)"
+          },
+          "help": "Optional but recommended for faster verification"
+        },
+        {
+          "id": "address_line1",
+          "label": "Address",
+          "type": "text",
+          "required": true,
+          "placeholder": "Flat/House No., Building, Street"
+        },
+        {
+          "id": "city",
+          "label": "City",
+          "type": "text",
+          "required": true,
+          "placeholder": "Mumbai"
+        },
+        {
+          "id": "state",
+          "label": "State",
+          "type": "select",
+          "required": true,
+          "options": ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"]
+        },
+        {
+          "id": "pin_code",
+          "label": "PIN Code",
+          "type": "text",
+          "required": true,
+          "placeholder": "400001",
+          "validation": {
+            "pattern": "^\\d{6}$",
+            "length": 6,
+            "error": "PIN code must be 6 digits"
+          }
+        },
+        {
+          "id": "phone",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": true,
+          "placeholder": "9876543210",
+          "validation": {
+            "pattern": "^[6-9]\\d{9}$",
+            "length": 10,
+            "error": "Mobile must be 10 digits starting with 6-9"
+          }
+        }
+      ],
+      
+      "documents": {
+        "poi": {
+          "type": "aadhaar",
+          "name": "Aadhaar Card",
+          "description": "Unique Identification Authority of India card",
+          "sides": ["front", "back"],
+          "accepted_formats": ["jpg", "jpeg", "png"],
+          "max_size_mb": 5,
+          "ocr_fields": ["aadhaar_number", "name", "date_of_birth", "gender", "address"],
+          "tips": [
+            "Both front and back sides required",
+            "QR code must be clearly visible",
+            "Ensure 12-digit number is readable",
+            "Mask last 4 digits if using masked Aadhaar"
+          ],
+          "alternative": {
+            "type": "passport",
+            "name": "Indian Passport",
+            "sides": ["front", "back"]
+          }
+        },
+        "poa": {
+          "type": "utility_bill",
+          "name": "Utility Bill / Bank Statement",
+          "description": "Electricity bill, water bill, or bank statement",
+          "sides": ["front"],
+          "accepted_formats": ["jpg", "jpeg", "png", "pdf"],
+          "max_size_mb": 5,
+          "max_age_months": 3,
+          "ocr_fields": ["name", "address", "date"],
+          "tips": [
+            "Document must be less than 3 months old",
+            "Name and address must match Aadhaar",
+            "Date must be clearly visible"
+          ]
+        }
+      }
+    },
+    
+    "GB": {
+      "name": "United Kingdom",
+      "flag": "🇬🇧",
+      "currency": "GBP",
+      "language": "en",
+      
+      "personal_fields": [
+        {
+          "id": "title",
+          "label": "Title",
+          "type": "select",
+          "required": false,
+          "options": ["Mr", "Mrs", "Ms", "Miss", "Dr", "Other"]
+        },
+        {
+          "id": "first_name",
+          "label": "First Name",
+          "type": "text",
+          "required": true,
+          "placeholder": "James"
+        },
+        {
+          "id": "middle_name",
+          "label": "Middle Name(s)",
+          "type": "text",
+          "required": false,
+          "placeholder": "William"
+        },
+        {
+          "id": "last_name",
+          "label": "Last Name",
+          "type": "text",
+          "required": true,
+          "placeholder": "Smith"
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true,
+          "min_age": 18,
+          "max_age": 100
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "required": true,
+          "options": ["Male", "Female", "Prefer not to say"]
+        },
+        {
+          "id": "ni_number",
+          "label": "National Insurance Number",
+          "type": "id",
+          "required": false,
+          "placeholder": "QQ 12 34 56 A",
+          "validation": {
+            "pattern": "^[A-CEGHJ-PR-TW-Z]{2}\\s?\\d{2}\\s?\\d{2}\\s?\\d{2}\\s?[A-D]$",
+            "length": 13,
+            "error": "NI Number format: QQ 12 34 56 A"
+          },
+          "help": "Optional but helps with verification"
+        },
+        {
+          "id": "address_line1",
+          "label": "Address Line 1",
+          "type": "text",
+          "required": true,
+          "placeholder": "123 High Street"
+        },
+        {
+          "id": "address_line2",
+          "label": "Address Line 2",
+          "type": "text",
+          "required": false,
+          "placeholder": "Flat 4B"
+        },
+        {
+          "id": "city",
+          "label": "Town / City",
+          "type": "text",
+          "required": true,
+          "placeholder": "London"
+        },
+        {
+          "id": "county",
+          "label": "County",
+          "type": "text",
+          "required": false,
+          "placeholder": "Greater London"
+        },
+        {
+          "id": "postcode",
+          "label": "Postcode",
+          "type": "text",
+          "required": true,
+          "placeholder": "SW1A 1AA",
+          "validation": {
+            "pattern": "^[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}$",
+            "error": "Enter a valid UK postcode (e.g., SW1A 1AA)"
+          }
+        },
+        {
+          "id": "phone",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": true,
+          "placeholder": "07700900123",
+          "validation": {
+            "pattern": "^07\\d{9}$",
+            "length": 11,
+            "error": "UK mobile must start with 07 and be 11 digits"
+          }
+        }
+      ],
+      
+      "documents": {
+        "poi": {
+          "type": "passport",
+          "name": "UK Passport",
+          "description": "Her Majesty's Passport Office issued passport",
+          "sides": ["photo_page"],
+          "accepted_formats": ["jpg", "jpeg", "png"],
+          "max_size_mb": 5,
+          "ocr_fields": ["passport_number", "surname", "given_names", "date_of_birth", "expiry_date", "nationality"],
+          "tips": [
+            "Open passport to the photo page",
+            "Place on a dark background",
+            "Ensure MRZ code at bottom is visible",
+            "Avoid shadows on the photo"
+          ],
+          "alternative": {
+            "type": "driving_licence",
+            "name": "UK Driving Licence",
+            "sides": ["front", "back"]
+          }
+        },
+        "poa": {
+          "type": "utility_bill",
+          "name": "Utility Bill",
+          "description": "Gas, electricity, water, or council tax bill",
+          "sides": ["front"],
+          "accepted_formats": ["jpg", "jpeg", "png", "pdf"],
+          "max_size_mb": 5,
+          "max_age_months": 3,
+          "ocr_fields": ["name", "address", "date"],
+          "tips": [
+            "Bill must be dated within last 3 months",
+            "Name and address must be clearly visible",
+            "Mobile phone bills are NOT accepted"
+          ],
+          "alternative": {
+            "type": "bank_statement",
+            "name": "Bank Statement",
+            "max_age_months": 3
+          }
+        }
+      }
+    }
+  },
+  
+  "validation_rules": {
+    "cnic": {
+      "description": "Pakistan CNIC",
+      "regex": "^\\d{5}-\\d{7}-\\d{1}$",
+      "format": "#####-#######-#",
+      "example": "12345-1234567-1"
+    },
+    "aadhaar": {
+      "description": "India Aadhaar",
+      "regex": "^\\d{4}\\s?\\d{4}\\s?\\d{4}$",
+      "format": "#### #### ####",
+      "example": "1234 5678 9012"
+    },
+    "pan": {
+      "description": "India PAN",
+      "regex": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$",
+      "format": "AAAAA9999A",
+      "example": "ABCDE1234F"
+    },
+    "ni_number": {
+      "description": "UK National Insurance",
+      "regex": "^[A-CEGHJ-PR-TW-Z]{2}\\s?\\d{2}\\s?\\d{2}\\s?\\d{2}\\s?[A-D]$",
+      "format": "AA 99 99 99 A",
+      "example": "QQ 12 34 56 A"
+    },
+    "uk_postcode": {
+      "description": "UK Postcode",
+      "regex": "^[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}$",
+      "format": "AA9A 9AA",
+      "example": "SW1A 1AA"
+    },
+    "pk_postal": {
+      "description": "Pakistan Postal Code",
+      "regex": "^\\d{5}$",
+      "format": "#####",
+      "example": "44000"
+    },
+    "in_pin": {
+      "description": "India PIN Code",
+      "regex": "^\\d{6}$",
+      "format": "######",
+      "example": "400001"
+    }
+  },
+  
+  "ocr_prompts": {
+    "cnic": "Extract from this Pakistan CNIC: 1) CNIC number (13 digits with dashes), 2) Full name in English, 3) Father's name, 4) Date of birth, 5) Expiry date. Return as JSON.",
+    "aadhaar": "Extract from this India Aadhaar card: 1) Aadhaar number (12 digits), 2) Full name, 3) Date of birth, 4) Gender, 5) Address. Return as JSON.",
+    "passport": "Extract from this passport photo page: 1) Passport number, 2) Surname, 3) Given names, 4) Date of birth, 5) Expiry date, 6) Nationality. Return as JSON.",
+    "utility_bill": "Extract from this utility bill: 1) Account holder name, 2) Full address, 3) Bill date. Verify if bill is less than 3 months old. Return as JSON.",
+    "driving_licence": "Extract from this driving licence: 1) Licence number, 2) Full name, 3) Date of birth, 4) Expiry date, 5) Address. Return as JSON."
+  }
+}
