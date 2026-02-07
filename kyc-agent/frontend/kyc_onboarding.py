@@ -90,6 +90,14 @@ ICONS = {
 
 st.markdown("""
 <style>
+    /* Hide Streamlit header/footer chrome for cleaner look */
+    header[data-testid="stHeader"] {
+        background: #0b0f14;
+    }
+    #MainMenu, footer, header .stDeployButton {
+        display: none !important;
+    }
+
     /* Base colors for consistent readability */
     .stApp {
         background: #0b0f14;
@@ -104,11 +112,13 @@ st.markdown("""
     .stMarkdown, .stMarkdown * {
         color: #e5e7eb;
     }
-    /* Reset scrollbar to page level */
+    /* Widen the centered container to use more screen space */
     .main .block-container {
-        max-width: 1100px;
+        max-width: min(95vw, 900px);
         padding-top: 2rem;
         padding-bottom: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
         overflow: visible !important;
     }
     
@@ -852,7 +862,7 @@ def generate_guidance(vision_result: dict, issues: list) -> str:
     return "Please review the issues listed and consider retaking the photo."
 
 
-def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = True, show_manual_review: bool = False):
+def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = True):
     """Render the document analysis results in the UI."""
     if not analysis:
         return
@@ -914,32 +924,13 @@ def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = 
     # Simple score bar (lightweight visual)
     st.progress(min(max(score, 0), 100) / 100.0, text=f"Quality {score}/100")
 
-    if data_match_score is not None:
-        col1, col2, col3 = st.columns([1, 1, 3])
-        with col1:
-            st.metric("Quality Score", score)
-        with col2:
-            st.metric("Data Match", f"{data_match_score}%")
-        with col3:
-            st.write(f"**{status_text}**")
-            if guidance:
-                st.markdown(f'<p style="color:#8892a4;font-size:0.85rem;margin:4px 0 0;">{guidance}</p>', unsafe_allow_html=True)
-    else:
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            st.metric("Quality Score", score)
-        with col2:
-            st.write(f"**{status_text}**")
-            if guidance:
-                st.markdown(f'<p style="color:#8892a4;font-size:0.85rem;margin:4px 0 0;">{guidance}</p>', unsafe_allow_html=True)
-    
-    # Manual review badge on document card
-    if show_manual_review:
-        st.markdown('''
-            <div style="padding:6px 10px;background:#1f2937;border:1px solid #f59e0b;border-radius:8px;display:inline-block;margin:6px 0;">
-                <span style="color:#f59e0b;font-weight:600;">Manual Review Required</span>
-            </div>
-        ''', unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.metric("Quality Score", score)
+    with col2:
+        st.write(f"**{status_text}**")
+        if guidance:
+            st.markdown(f'<p style="color:#8892a4;font-size:0.85rem;margin:4px 0 0;">{guidance}</p>', unsafe_allow_html=True)
 
     # Show issues if any
     if issues:
@@ -1600,8 +1591,7 @@ def render_step_documents():
 
                         # Show analysis result
                         analysis = st.session_state.document_analysis.get(analysis_key, {})
-                        show_manual = bool(analysis.get("data_mismatches")) or bool(analysis.get("mismatches"))
-                        render_analysis_result(analysis, front_key, allow_expander=False, show_manual_review=show_manual)
+                        render_analysis_result(analysis, front_key, allow_expander=False)
 
                         # Reanalyze button
                         if st.button("Re-analyze", key=f"reanalyze_{front_key}", type="secondary"):
@@ -1683,8 +1673,7 @@ def render_step_documents():
 
                             # Show analysis result
                             analysis = st.session_state.document_analysis.get(analysis_key, {})
-                            show_manual = bool(analysis.get("data_mismatches")) or bool(analysis.get("mismatches"))
-                            render_analysis_result(analysis, back_key, allow_expander=False, show_manual_review=show_manual)
+                            render_analysis_result(analysis, back_key, allow_expander=False)
 
                             # Reanalyze button
                             if st.button("Re-analyze", key=f"reanalyze_{back_key}", type="secondary"):
