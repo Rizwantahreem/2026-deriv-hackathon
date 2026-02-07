@@ -741,7 +741,24 @@ def render_kyc_form(
     # Show status (no button - navigation is in kyc_onboarding.py)
     if validation_result["is_valid"]:
         st.success("All required fields are valid. You can proceed.")
-    
+    else:
+        errors = validation_result["errors"]
+        if errors:
+            error_lines = []
+            for field_id, msg in errors.items():
+                error_lines.append(
+                    f'<p style="color:#d0d5de;margin:2px 0;font-size:0.82rem;">'
+                    f'<strong>{field_id.replace("_", " ").title()}</strong>: {msg}</p>'
+                )
+            st.markdown(
+                '<div style="padding:12px 16px;background:#1a1020;border:1px solid #ff4d6a;border-radius:8px;">'
+                '<p style="color:#ff4d6a;font-weight:600;margin:0 0 6px;font-size:0.85rem;">Please fix the following fields:</p>'
+                + "".join(error_lines[:6])
+                + (f'<p style="color:#8892a4;margin:4px 0 0;font-size:0.78rem;">...and {len(error_lines) - 6} more</p>' if len(error_lines) > 6 else "")
+                + '</div>',
+                unsafe_allow_html=True,
+            )
+
     return {
         "form_data": form_data,
         "is_valid": validation_result["is_valid"],

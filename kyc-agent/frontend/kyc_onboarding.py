@@ -1469,7 +1469,7 @@ def render_step_form():
                 st.rerun()
         else:
             st.button("Continue", disabled=True, use_container_width=True)
-            st.caption("Complete all required fields to continue")
+            st.caption("Fix the errors shown above to continue")
 
 
 # =============================================================================
@@ -1714,6 +1714,8 @@ def render_step_documents():
             st.rerun()
     
     with col3:
+        # Check which documents are actually in session state
+        uploaded_keys = list(st.session_state.documents_uploaded.keys())
         if all_docs_uploaded:
             if st.button("Review & Submit", type="primary", use_container_width=True):
                 st.session_state.onboarding_step = 4
@@ -1721,7 +1723,21 @@ def render_step_documents():
                 st.rerun()
         else:
             st.button("Review & Submit", disabled=True, use_container_width=True)
-            st.caption("Upload all required documents to continue")
+            # Show which docs are missing to help user
+            missing = []
+            for req_key, doc_req in schema.document_requirements.items():
+                for doc in doc_req.documents:
+                    fk = f"{req_key}_{doc.type}_front"
+                    if fk not in st.session_state.documents_uploaded:
+                        missing.append(f"{doc.name} (front)")
+                    if doc.requires_back:
+                        bk = f"{req_key}_{doc.type}_back"
+                        if bk not in st.session_state.documents_uploaded:
+                            missing.append(f"{doc.name} (back)")
+            if missing:
+                st.caption(f"Missing: {', '.join(missing)}")
+            else:
+                st.caption("All files detected — please scroll up to check for errors")
 
 
 # =============================================================================
