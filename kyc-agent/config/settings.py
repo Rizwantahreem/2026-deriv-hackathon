@@ -88,5 +88,15 @@ if env_path.exists():
     from dotenv import load_dotenv
     load_dotenv(env_path)
 
+# On Streamlit Cloud, secrets are in .streamlit/secrets.toml
+# Load them into os.environ so pydantic-settings can find them
+try:
+    import streamlit as st
+    for key, value in st.secrets.items():
+        if isinstance(value, str) and key not in os.environ:
+            os.environ[key] = value
+except Exception:
+    pass
+
 # Global settings instance
 settings = Settings()
