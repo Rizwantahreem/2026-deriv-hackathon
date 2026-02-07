@@ -11,6 +11,15 @@ Integrates:
 """
 
 import streamlit as st
+
+# PAGE CONFIG — must be the FIRST Streamlit command
+st.set_page_config(
+    page_title="KYC Onboarding",
+    page_icon="🛡️",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
+
 import sys
 from pathlib import Path
 from datetime import date
@@ -31,9 +40,6 @@ from dotenv import load_dotenv
 env_path = project_root / ".env"
 if env_path.exists():
     load_dotenv(env_path)
-    # Debug: print to confirm loading (remove in production)
-    # print(f"Loaded .env from: {env_path}")
-    # print(f"GEMINI_API_KEY present: {bool(os.getenv('GEMINI_API_KEY'))}")
 
 from frontend.dynamic_form import (
     init_form_state,
@@ -50,17 +56,6 @@ from config.kyc_schema_loader import (
     get_supported_countries,
     FormDataValidator,
     CountryKYCSchema
-)
-
-# =============================================================================
-# PAGE CONFIG
-# =============================================================================
-
-st.set_page_config(
-    page_title="KYC Onboarding",
-    page_icon='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff444f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
-    layout="centered",
-    initial_sidebar_state="expanded"
 )
 
 # =============================================================================
@@ -251,10 +246,16 @@ st.markdown("""
         margin-bottom: 8px;
     }
     
-     /* Hide streamlit branding */
+     /* Hide streamlit branding (keep sidebar toggle visible) */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    header[data-testid="stHeader"] .stDeployButton,
+    header[data-testid="stHeader"] .stToolbar {
+        display: none !important;
+    }
     
     /* Hide markdown header anchor (link icon) */
     .stMarkdown .anchor-link { display: none !important; }
@@ -819,11 +820,25 @@ def analyze_document_directly(image_base64: str, document_type: str, country_cod
         }
         
     except Exception as e:
-        # Get full traceback for debugging
         error_traceback = traceback.format_exc()
-        print(f"Document analysis error: {error_traceback}")  # Log to console
+        error_str = str(e).lower()
+        print(f"Document analysis error: {error_traceback}")
 
-        # Return error result if vision analysis fails - do NOT show high score
+        # Detect API quota / rate limit errors
+        is_quota = any(k in error_str for k in ("429", "quota", "rate limit", "resource exhausted", "too many requests"))
+
+        if is_quota:
+            return {
+                "success": False,
+                "score": 0,
+                "is_ready": False,
+                "issues": [],
+                "guidance": "",
+                "severity_level": "high",
+                "error": "API_QUOTA_EXCEEDED",
+                "error_display": "API limit reached — please wait 1-2 minutes and try again. This is a free-tier API limitation, not a project error.",
+            }
+
         return {
             "success": False,
             "score": 0,
@@ -833,13 +848,11 @@ def analyze_document_directly(image_base64: str, document_type: str, country_cod
                 "severity": "high",
                 "title": "Analysis Failed",
                 "description": f"Could not analyze document: {str(e)}",
-                "suggestion": "Please ensure you have a valid API key configured and check the console for details"
+                "suggestion": "Please try again or re-upload the image"
             }],
-            "guidance": f"Document analysis failed: {str(e)}",
+            "guidance": "",
             "severity_level": "high",
-            "demo_mode": False,
             "error": str(e),
-            "traceback": error_traceback  # Include for debugging
         }
 
 
@@ -869,9 +882,30 @@ def render_analysis_result(analysis: dict, doc_key: str, allow_expander: bool = 
 
     # Check for errors first
     if analysis.get("error") or not analysis.get("success", True):
-        error_msg = analysis.get("error", "Unknown error")
-        st.error(f" Document analysis failed: {error_msg}")
-        st.caption("Please check your API key configuration or try again.")
+        error_code = analysis.get("error", "")
+
+        # Friendly quota/rate-limit message
+        if error_code == "API_QUOTA_EXCEEDED" or any(
+            k in str(error_code).lower() for k in ("429", "quota", "rate limit", "resource exhausted")
+        ):
+            st.markdown('''
+                <div style="padding:14px 18px;background:#1a1510;border:1px solid #ffb347;border-radius:10px;margin:8px 0;">
+                    <p style="color:#ffb347;font-weight:600;margin:0 0 6px;font-size:0.95rem;">
+                        API Rate Limit Reached
+                    </p>
+                    <p style="color:#d4a054;margin:0;font-size:0.88rem;">
+                        The free-tier Gemini API has a per-minute request limit.
+                        Please wait 1-2 minutes and click <strong>Re-analyze</strong>.
+                        This is not a project error.
+                    </p>
+                </div>
+            ''', unsafe_allow_html=True)
+            return
+
+        # Generic error
+        error_display = analysis.get("error_display", analysis.get("error", "Unknown error"))
+        st.error(f"Document analysis failed: {error_display}")
+        st.caption("Please try re-uploading or click Re-analyze.")
         return
 
     score = analysis.get("score", 0)
