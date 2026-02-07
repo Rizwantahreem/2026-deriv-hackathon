@@ -257,11 +257,7 @@ st.markdown("""
      /* Hide streamlit branding (keep sidebar toggle visible) */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-    }
-    header[data-testid="stHeader"] .stDeployButton,
-    header[data-testid="stHeader"] .stToolbar {
+    header[data-testid="stHeader"] .stDeployButton {
         display: none !important;
     }
     
