@@ -14,7 +14,7 @@ pydantic>=2.5.3
 pydantic-settings>=2.1.0
 
 # Frontend
-streamlit>=1.30.0
+streamlit>=1.30.0,<1.43.0
 
 # HTTP Client (for API calls)
 httpx>=0.26.0

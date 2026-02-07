@@ -124,15 +124,29 @@ st.markdown("""
         overflow: visible !important;
     }
 
-    /* Sidebar styling */
+    /* Sidebar — force visible on all Streamlit versions */
     section[data-testid="stSidebar"] {
         background: #0d1117;
         border-right: 1px solid #1e2a3a;
         min-width: 260px !important;
+        width: 260px !important;
         z-index: 999;
+        transform: none !important;
+        transition: none !important;
     }
     section[data-testid="stSidebar"] > div {
         background: #0d1117;
+    }
+    /* Newer Streamlit versions use this wrapper */
+    div[data-testid="stSidebarContent"] {
+        background: #0d1117;
+    }
+    /* Ensure the collapse control is always visible */
+    section[data-testid="stSidebar"] button[data-testid="stSidebarNavCollapseButton"],
+    button[data-testid="stSidebarCollapsedControl"],
+    div[data-testid="collapsedControl"] {
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     /* Header */
