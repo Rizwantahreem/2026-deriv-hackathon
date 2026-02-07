@@ -15,8 +15,8 @@ import streamlit as st
 # PAGE CONFIG — must be the FIRST Streamlit command
 st.set_page_config(
     page_title="KYC Onboarding",
-    page_icon="🛡️",
-    layout="centered",
+    page_icon='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff444f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -107,24 +107,32 @@ st.markdown("""
     .stMarkdown, .stMarkdown * {
         color: #e5e7eb;
     }
-    /* Widen the centered container to use more screen space */
+    /* Centre the main content in wide layout */
     .main .block-container {
-        max-width: min(95vw, 900px);
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
         padding-top: 2rem;
         padding-bottom: 2rem;
         padding-left: 2rem;
         padding-right: 2rem;
         overflow: visible !important;
     }
-    
+
     /* Remove inner scrollbars */
     .stExpander, .stForm, .element-container {
         overflow: visible !important;
     }
-    
+
+    /* Sidebar styling */
     section[data-testid="stSidebar"] {
         background: #0d1117;
         border-right: 1px solid #1e2a3a;
+        min-width: 260px !important;
+        z-index: 999;
+    }
+    section[data-testid="stSidebar"] > div {
+        background: #0d1117;
     }
     
     /* Header */
